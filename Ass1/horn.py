@@ -1,16 +1,20 @@
 import numpy as np
 from scipy.signal import convolve2d
 from utils import gausssmooth, gaussderiv
+from lucas import lucas_kanade
 
 
-def horn_schunck(img1, img2, num_iters, lmbd):
+def horn_schunck(img1, img2, max_iters, lmbd, N=None, eps=3e-5):
     """
     Estimate optical flow using Horn-Schunck algorithm
 
     Parameters:
         img1      - first image matrix (in grayscale; this is "frame t")
+
         img2      - second image matrix (in grayscale; this is "frame t+1")
-        num_iters - number of iterations for improving optical flow
+
+        max_iters - number of iterations for improving optical flow
+        
         lmbd      - parameter lambda, which serves as a regularization
                     constant, denoting how "strongly" do we want to value
                     smoothness of the energy field.
@@ -20,9 +24,13 @@ def horn_schunck(img1, img2, num_iters, lmbd):
                (respectively) displacement components for each pixel
     """
 
-    # Initialize
-    u = np.zeros(img1.shape)
-    v = np.zeros(img2.shape)
+    # Initialize necessary stuff
+    if N:
+        # Initialize with output of Lucas-Kanade
+        u, v = lucas_kanade(img1, img2, N)
+    else:
+        u = np.zeros(img1.shape)
+        v = np.zeros(img2.shape)
     sigma = 0.005 * min(img1.shape) # sigma for Gaussian filter is generally calculated like this
     avg_kernel = np.array([
         [0,   1/4, 0  ],
@@ -37,23 +45,35 @@ def horn_schunck(img1, img2, num_iters, lmbd):
     img2deriv = gaussderiv(img2, sigma)  # TODO same...
     Ix = 1/2 * (img1deriv[0] + img2deriv[0])
     Iy = 1/2 * (img1deriv[1] + img2deriv[1])
+    P_bottom = np.square(Ix) + np.square(Iy) + lmbd  # so we don't recalculate unnecessarily
     print(">>> Derivatives done")
 
 
-    # Iteratively refine optical flow
-    for i in range(1, num_iters+1):
+    # Iteratively refine optical flow until 'convergence' or until iteration limit reached
+    for i in range(1, max_iters+1):
         avg_u = convolve2d(u, avg_kernel, mode="same")
         avg_v = convolve2d(v, avg_kernel, mode="same")
         P = np.divide(
             It + np.multiply(Ix, avg_u) + np.multiply(Iy, avg_v),
-            np.square(Ix) + np.square(Iy) + lmbd
+            P_bottom
         )
 
+        prev_u = u
+        prev_v = v
         u = avg_u - np.multiply(Ix, P)
         v = avg_v - np.multiply(Iy, P)
 
+        u_mean_diff = np.mean(np.abs(u - prev_u))
+        v_mean_diff = np.mean(np.abs(v - prev_v))
+
         if i % 50 == 0:
             print(f"Iteration {i} done")
+            print(u_mean_diff)
+            print(v_mean_diff)
+
+        if u_mean_diff < eps and v_mean_diff < eps:
+            print(f"Converged on iteration {i}")
+            break
 
     print("Horn-Schunck done\n")
     return u, v

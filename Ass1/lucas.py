@@ -9,7 +9,9 @@ def lucas_kanade(img1, img2, N=3):
 
     Parameters:
         img1 - first image matrix (in grayscale; this is "frame t")
+
         img2 - second image matrix (in grayscale; this is "frame t+1")
+        
         N    - size of the neighborhood considered, when calculating 
                displacement vectors for given pixel
 
@@ -33,11 +35,11 @@ def lucas_kanade(img1, img2, N=3):
 
 
     # Calculate sum of required element-wise products
-    sIxt = convolve2d(np.multiply(Ix, It), sum_kernel)
-    sIyt = convolve2d(np.multiply(Iy, It), sum_kernel)
-    sIxy = convolve2d(np.multiply(Ix, Iy), sum_kernel)
-    sIxx = convolve2d(np.multiply(Ix, Ix), sum_kernel)
-    sIyy = convolve2d(np.multiply(Iy, Iy), sum_kernel)
+    sIxt = convolve2d(np.multiply(Ix, It), sum_kernel, mode="same")  # has to be same because we may use it for HS
+    sIyt = convolve2d(np.multiply(Iy, It), sum_kernel, mode="same")
+    sIxy = convolve2d(np.multiply(Ix, Iy), sum_kernel, mode="same")
+    sIxx = convolve2d(np.multiply(Ix, Ix), sum_kernel, mode="same")
+    sIyy = convolve2d(np.multiply(Iy, Iy), sum_kernel, mode="same")
     print(">>> Convolutions done")
 
 
