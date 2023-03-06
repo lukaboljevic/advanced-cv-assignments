@@ -46,8 +46,14 @@ def draw(img1, img2, normalize_values=False, **kwargs):
 
 
     # Draw the results
+    alpha = 0.7  # opacity of image shown beneath the optical flow field
+    extent = (0, img1.shape[1], -img1.shape[0], 0)
+
+    ax_21.imshow(img1, alpha=alpha, extent=extent)
     show_flow(u_lk, v_lk, ax_21, type="field", set_aspect=True)
     ax_21.set_title(title_lk)
+
+    ax_22.imshow(img1, alpha=alpha, extent=extent)
     show_flow(u_hs, v_hs, ax_22, type="field", set_aspect=True)
     ax_22.set_title(title_hs)
 
