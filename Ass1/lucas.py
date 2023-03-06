@@ -27,8 +27,8 @@ def lucas_kanade(img1, img2, N=3):
 
     # Calculate spatial and temporal derivatives
     It = gausssmooth(img2 - img1, sigma)
-    img1deriv = gaussderiv(img1, sigma)  # TODO how much to set sigma here ...
-    img2deriv = gaussderiv(img2, sigma)  # TODO same...
+    img1deriv = gaussderiv(img1, sigma)
+    img2deriv = gaussderiv(img2, sigma)
     Ix = 1/2 * (img1deriv[0] + img2deriv[0])
     Iy = 1/2 * (img1deriv[1] + img2deriv[1])
     print(">>> Derivatives done")
