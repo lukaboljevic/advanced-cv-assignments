@@ -16,15 +16,11 @@ def test_time_lk(img1, img2, N, normalize_values=True):
         img2 = img2 / 255.0
 
     print("=" * 70)
-    print(">>>>>> LUCAS-KANADE <<<<<<")
     start_lk = perf_counter()
     lucas_kanade(img1, img2, N, verbose=False)
     end_lk = perf_counter() - start_lk
 
-
-    print("=" * 70)
-    print(f"Parameters: N = {N}")
-    print(f"Lucas-Kanade: {round(end_lk, 3)} s")
+    print(f"Lucas-Kanade, N = {N}: {round(end_lk, 3)} s")
     print()
 
 
@@ -103,6 +99,11 @@ if __name__ == "__main__":
 
     for N in Ns:
         test_time_lk(img1, img2, N, normalize_values=normalize)
+
+    print()
+    print("*" * 80)
+    print("*" * 80)
+    print()
 
     for max_iters in iter_limits:
         test_time_hs(img1,
