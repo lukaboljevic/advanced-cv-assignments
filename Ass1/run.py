@@ -8,7 +8,7 @@ from horn import horn_schunck
 from utils import rotate_image, show_flow
 
 
-def draw(img1, img2, normalize_values=False, overlay=True, **kwargs):
+def draw(img1, img2, normalize_values=True, overlay=True, **kwargs):
     """
     Draw the results of Lucas-Kanade and Horn-Schunck optical flow estimation.
     """
@@ -71,48 +71,6 @@ def draw(img1, img2, normalize_values=False, overlay=True, **kwargs):
     plt.show()
 
 
-def test_time(img1, img2, normalize_values=False, **kwargs):
-    """
-    Test execution time for Lucas-Kanade and Horn-Schunck algorithms
-    """
-    if normalize_values:
-        img1 = img1 / 255.0
-        img2 = img2 / 255.0
-
-    # Get parameters
-    N = kwargs.get("N")
-    max_iters = kwargs.get("max_iters")
-    lmbd = kwargs.get("lmbd")
-    eps = kwargs.get("eps")
-
-
-    # Lucas-Kanade
-    start_lk = perf_counter()
-    lucas_kanade(img1, img2, N)
-    end_lk = perf_counter() - start_lk
-
-
-    # Horn-Schunck
-    start_hs = perf_counter()
-    horn_schunck(img1, img2, max_iters, lmbd, eps=eps)
-    end_hs = perf_counter() - start_hs
-
-
-    # Horn-Schunck initialized with output of Lucas-Kanade
-    start_hs_with_lk = perf_counter()
-    horn_schunck(img1, img2, max_iters, lmbd, N=N) #, eps=eps)
-    end_hs_with_lk = perf_counter() - start_hs_with_lk
-
-
-    print("========================================================")
-    print(f"Parameters: N = {N}, max_iters = {max_iters}, lambda = {lmbd}")
-    print(f"Lucas-Kanade: {round(end_lk, 3)} s")
-    print(f"Horn-Schunck: {round(end_hs, 3)} s")
-    print(f"Horn-Schunck + Lucas-Kanade: {round(end_hs_with_lk, 3)} s")
-    print()
-
-
-
 if __name__ == "__main__":
     # img1 = np.random.rand(200, 200).astype(np.float32)
     # img2 = img1.copy()
@@ -124,23 +82,17 @@ if __name__ == "__main__":
 
     # img1 = cv.imread("./lab2/024.jpg", cv.IMREAD_GRAYSCALE).astype(np.float32)
     # img2 = cv.imread("./lab2/025.jpg", cv.IMREAD_GRAYSCALE).astype(np.float32)
-    # N, max_iters, lmbd = 20, 500, 5
+    # N, max_iters, lmbd = 20, 1000, 1
     # normalize = True
     # overlay = True
     # eps=3e-5
 
     # img1 = cv.imread("./collision/00000120.jpg", cv.IMREAD_GRAYSCALE).astype(np.float32)
     # img2 = cv.imread("./collision/00000121.jpg", cv.IMREAD_GRAYSCALE).astype(np.float32)
-    # N, max_iters, lmbd = 50, 1000, 5
+    # N, max_iters, lmbd = 50, 1000, 5  # or try lmbd=1
     # normalize = True
     # overlay = True
     # eps=5e-6
-    
-    # img1 = cv.imread("./disparity/office_left.png", cv.IMREAD_GRAYSCALE).astype(np.float32)
-    # img2 = cv.imread("./disparity/office_right.png", cv.IMREAD_GRAYSCALE).astype(np.float32)
-    # normalize = True
-    # overlay = True
-    # eps=3e-5
 
     img1 = cv.imread("./waffles/waffles1.jpg", cv.IMREAD_GRAYSCALE).astype(np.float32)
     img2 = cv.imread("./waffles/waffles2.jpg", cv.IMREAD_GRAYSCALE).astype(np.float32)
@@ -151,7 +103,7 @@ if __name__ == "__main__":
 
     # img1 = cv.imread("./waffles/waffles1_fast.jpg", cv.IMREAD_GRAYSCALE).astype(np.float32)
     # img2 = cv.imread("./waffles/waffles2_fast.jpg", cv.IMREAD_GRAYSCALE).astype(np.float32)
-    # N, max_iters, lmbd = 30, 1000, 10
+    # N, max_iters, lmbd = 50, 1000, 5
     # normalize = True
     # overlay = True
     # eps=1e-5
@@ -167,10 +119,3 @@ if __name__ == "__main__":
          init_with_lk=False,
          eps=eps)
     
-    # test_time(img1,
-    #           img2,
-    #           normalize_values=normalize,
-    #           N=N,
-    #           max_iters=max_iters,
-    #           lmbd=lmbd,
-    #           eps=eps)

@@ -3,7 +3,7 @@ from scipy.signal import convolve2d
 from utils import gausssmooth, gaussderiv
 
 
-def lucas_kanade(img1, img2, N=3):
+def lucas_kanade(img1, img2, N=3, verbose=True):
     """
     Estimate optical flow using Lucas-Kanade algorithm
 
@@ -31,7 +31,8 @@ def lucas_kanade(img1, img2, N=3):
     img2deriv = gaussderiv(img2, sigma)
     Ix = 1/2 * (img1deriv[0] + img2deriv[0])
     Iy = 1/2 * (img1deriv[1] + img2deriv[1])
-    print(">>> Derivatives done")
+    if verbose:
+        print(">>> Derivatives done")
 
 
     # Calculate sum of required element-wise products
@@ -40,7 +41,8 @@ def lucas_kanade(img1, img2, N=3):
     sIxy = convolve2d(np.multiply(Ix, Iy), sum_kernel, mode="same")
     sIxx = convolve2d(np.multiply(Ix, Ix), sum_kernel, mode="same")
     sIyy = convolve2d(np.multiply(Iy, Iy), sum_kernel, mode="same")
-    print(">>> Convolutions done")
+    if verbose:
+        print(">>> Convolutions done")
 
 
     # Calculate determinant of covariance matrix

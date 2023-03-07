@@ -4,7 +4,7 @@ from utils import gausssmooth, gaussderiv
 from lucas import lucas_kanade
 
 
-def horn_schunck(img1, img2, max_iters, lmbd, N=None, eps=None):
+def horn_schunck(img1, img2, max_iters, lmbd, N=None, eps=None, verbose=True):
     """
     Estimate optical flow using Horn-Schunck algorithm
 
@@ -34,7 +34,7 @@ def horn_schunck(img1, img2, max_iters, lmbd, N=None, eps=None):
     # Initialize necessary stuff
     if N:
         # Initialize with output of Lucas-Kanade
-        u, v = lucas_kanade(img1, img2, N)
+        u, v = lucas_kanade(img1, img2, N, verbose=verbose)
     else:
         u = np.zeros(img1.shape)
         v = np.zeros(img2.shape)
@@ -53,7 +53,8 @@ def horn_schunck(img1, img2, max_iters, lmbd, N=None, eps=None):
     Ix = 1/2 * (img1deriv[0] + img2deriv[0])
     Iy = 1/2 * (img1deriv[1] + img2deriv[1])
     P_bottom = np.square(Ix) + np.square(Iy) + lmbd  # so we don't recalculate unnecessarily
-    print(">>> Derivatives done")
+    if verbose:
+        print(">>> Derivatives done")
 
 
     # Iteratively refine optical flow until 'convergence' or until iteration limit reached
@@ -73,14 +74,14 @@ def horn_schunck(img1, img2, max_iters, lmbd, N=None, eps=None):
         u_mean_diff = np.mean(np.abs(u - prev_u))
         v_mean_diff = np.mean(np.abs(v - prev_v))
 
-        if i % 50 == 0:
+        if verbose and i % 50 == 0:
             print(f"\tIteration {i} done")
             print(f"\t\tu_mean diff: {u_mean_diff}")
             print(f"\t\tv_mean diff: {v_mean_diff}")
 
         if eps and u_mean_diff < eps and v_mean_diff < eps:
-            print(f"\tConverged on iteration {i}")
+            print(f">>> Horn-Schunck converged on iteration {i}")
             break
 
-    print("Horn-Schunck done\n")
+    print(">>> Horn-Schunck done\n")
     return u, v
