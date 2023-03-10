@@ -7,7 +7,7 @@ from horn import horn_schunck
 from utils import rotate_image
 
 
-def test_time_lk(img1, img2, N, normalize_values=True):
+def test_time_lk(img1, img2, Ns, normalize_values=True):
     """
     Test execution time for Lucas-Kanade algorithm
     """
@@ -15,12 +15,19 @@ def test_time_lk(img1, img2, N, normalize_values=True):
         img1 = img1 / 255.0
         img2 = img2 / 255.0
 
-    print("=" * 70)
-    start_lk = perf_counter()
-    lucas_kanade(img1, img2, N, verbose=False)
-    end_lk = perf_counter() - start_lk
+    times = []
 
-    print(f"Lucas-Kanade, N = {N}: {round(end_lk, 3)} s")
+    print("=" * 70)
+    for N in Ns:
+        start_lk = perf_counter()
+        lucas_kanade(img1, img2, N, verbose=False)
+        end_lk = perf_counter() - start_lk
+        times.append(round(end_lk, 3))
+
+    
+    print("=" * 70)
+    for N, time in zip(Ns, times):
+        print(f"Lucas-Kanade, N = {N}: {time} s")
     print()
 
 
@@ -73,20 +80,20 @@ if __name__ == "__main__":
     # normalize = False
     # eps=1e-5
 
-    img1 = cv.imread("./lab2/024.jpg", cv.IMREAD_GRAYSCALE).astype(np.float32)
-    img2 = cv.imread("./lab2/025.jpg", cv.IMREAD_GRAYSCALE).astype(np.float32)
-    normalize = True
-    eps=3e-5
+    # img1 = cv.imread("./lab2/024.jpg", cv.IMREAD_GRAYSCALE).astype(np.float32)
+    # img2 = cv.imread("./lab2/025.jpg", cv.IMREAD_GRAYSCALE).astype(np.float32)
+    # normalize = True
+    # eps=3e-5
 
     # img1 = cv.imread("./collision/00000120.jpg", cv.IMREAD_GRAYSCALE).astype(np.float32)
     # img2 = cv.imread("./collision/00000121.jpg", cv.IMREAD_GRAYSCALE).astype(np.float32)
     # normalize = True
     # eps=5e-6
 
-    # img1 = cv.imread("./waffles/waffles1.jpg", cv.IMREAD_GRAYSCALE).astype(np.float32)
-    # img2 = cv.imread("./waffles/waffles2.jpg", cv.IMREAD_GRAYSCALE).astype(np.float32)
-    # normalize = True
-    # eps=1e-5
+    img1 = cv.imread("./waffles/waffles1.jpg", cv.IMREAD_GRAYSCALE).astype(np.float32)
+    img2 = cv.imread("./waffles/waffles2.jpg", cv.IMREAD_GRAYSCALE).astype(np.float32)
+    normalize = True
+    eps=1e-5
 
     # img1 = cv.imread("./waffles/waffles1_fast.jpg", cv.IMREAD_GRAYSCALE).astype(np.float32)
     # img2 = cv.imread("./waffles/waffles2_fast.jpg", cv.IMREAD_GRAYSCALE).astype(np.float32)
@@ -94,11 +101,10 @@ if __name__ == "__main__":
     # eps=1e-5
 
     
-    Ns = [3, 10, 20, 50]
+    Ns = [10, 20, 50]
     iter_limits = [200, 500, 1000]
 
-    for N in Ns:
-        test_time_lk(img1, img2, N, normalize_values=normalize)
+    test_time_lk(img1, img2, Ns, normalize_values=normalize)
 
     print()
     print("*" * 80)
@@ -117,3 +123,47 @@ if __name__ == "__main__":
         print("*" * 80)
         print("*" * 80)
         print()
+
+
+"""
+lab images
+    Lucas-Kanade, N = 10: 0.347 s
+    Lucas-Kanade, N = 20: 1.162 s
+    Lucas-Kanade, N = 50: 6.401 s
+
+    Parameters: max_iters = 200, lambda = 5, N (for LK) = 20
+    Horn-Schunck:                                   5.325 s
+    Horn-Schunck + Lucas-Kanade:                    6.259 s
+    Horn-Schunck + Lucas-Kanade, allow converging:  6.253 s
+
+    Parameters: max_iters = 500, lambda = 5, N (for LK) = 20
+    Horn-Schunck:                                   13.399 s
+    Horn-Schunck + Lucas-Kanade:                    14.674 s
+    Horn-Schunck + Lucas-Kanade, allow converging:  14.103 s
+
+    Parameters: max_iters = 1000, lambda = 5, N (for LK) = 20
+    Horn-Schunck:                                   24.944 s
+    Horn-Schunck + Lucas-Kanade:                    26.082 s
+    Horn-Schunck + Lucas-Kanade, allow converging:  26.372 s
+
+
+waffles
+    Lucas-Kanade, N = 10: 0.44 s
+    Lucas-Kanade, N = 20: 1.747 s
+    Lucas-Kanade, N = 50: 10.543 s
+
+    Parameters: max_iters = 200, lambda = 5, N (for LK) = 20
+    Horn-Schunck:                                   7.955 s
+    Horn-Schunck + Lucas-Kanade:                    9.859 s
+    Horn-Schunck + Lucas-Kanade, allow converging:  9.839 s
+
+    Parameters: max_iters = 500, lambda = 5, N (for LK) = 20
+    Horn-Schunck:                                   20.341 s
+    Horn-Schunck + Lucas-Kanade:                    21.828 s
+    Horn-Schunck + Lucas-Kanade, allow converging:  21.822 s
+
+    Parameters: max_iters = 1000, lambda = 5, N (for LK) = 20
+    Horn-Schunck:                                   39.91 s
+    Horn-Schunck + Lucas-Kanade:                    41.782 s
+    Horn-Schunck + Lucas-Kanade, allow converging:  40.841 s
+"""
