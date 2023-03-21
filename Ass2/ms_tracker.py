@@ -33,11 +33,11 @@ Check out the implementation details on slides too.
 class MSTracker(ut.Tracker):
     def __init__(self, kernel_type="epanechnikov", **params):
         self.kernel_type = kernel_type
-        self.sigma = params.get("sigma", 1)
-        self.num_bins = params.get("num_bins", 16)
-        self.alpha = params.get("alpha", 0)  # for updating target template
+        self.sigma = params.get("sigma", 1)  # for Epanechnikov or Gaussian kernel
+        self.num_bins = params.get("num_bins", 16)  # number of bins used for the target template/candidate histograms
+        self.alpha = params.get("alpha", 0)  # for updating target template (so called update speed)
         self.eps_stop = params.get("eps_stop", 0.1)  # for stopping mean shift iterations
-        self.eps_v = params.get("eps_v", 1e-4)  # for numerical stability when calculating weights w_i for mean shift
+        self.eps_v = params.get("eps_v", 1e-4)  # for numerical stability when calculating weights v for mean shift
 
 
     def initialize(self, image, region):
@@ -73,7 +73,8 @@ class MSTracker(ut.Tracker):
             # self.kernel_deriv[self.kernel_deriv > 0] = 1.0  # uniform kernel
             self.kernel_deriv = np.ones_like(self.kernel)  # this should be right? cuz it doesn't change backprojected img
         elif self.kernel_type == "gaussian":
-            pass
+            self.kernel = ut.gaussian_kernel(self.size[0], self.size[1], self.sigma)
+            self.kernel_deriv = self.kernel  # derivative of gaussian is gaussian
         else:
             raise ValueError(f"Unrecognized kernel type {self.kernel_type}")
         

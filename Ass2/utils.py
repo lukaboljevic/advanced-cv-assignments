@@ -26,6 +26,17 @@ def generate_responses_1():
     return gausssmooth(responses, 10)  # since the "PDF" needs to be smooth
 
 
+def generate_responses_2():
+    """
+    Generate another artificial PDF.
+    """
+    responses = np.zeros((100, 100), dtype=np.float32)
+    responses[35, 40] = 0.3
+    responses[40, 70] = 1.2
+    responses[65, 50] = 0.5
+    return gausssmooth(responses, 10)
+
+
 def get_patch(img, center, size):
     """
     Extract the patch from a given image, given center coordinates as (x, y) i.e.
@@ -93,8 +104,9 @@ def coordinates_kernels(kernel_size):
 def epanechnikov_kernel(width, height, sigma):
     """
     Create Epanechnikov kernel of given size.
+
+    Width and height need to be odd.
     """
-    # make sure that width and height are odd
     w2 = int(math.floor(width / 2))
     h2 = int(math.floor(height / 2))
 
@@ -105,6 +117,28 @@ def epanechnikov_kernel(width, height, sigma):
     kernel = (1 - ((X / sigma)**2 + (Y / sigma)**2))
     kernel = kernel / np.max(kernel)
     kernel[kernel < 0] = 0
+    return kernel
+
+
+def gaussian_kernel(width, height, sigma="auto"):
+    """
+    Create Gaussian kernel of given size.
+
+    Width and height need to be odd.
+    """
+    if sigma == "auto":
+        # Formula is courtesy of OpenCV: https://docs.opencv.org/4.x/d4/d86/group__imgproc__filter.html#gac05a120c1ae92a6060dd0db190a61afa
+        sigma = 0.3 * ((min(width, height) - 1) * 0.5 - 1) + 0.8
+
+    w2 = int(math.floor(width / 2))
+    h2 = int(math.floor(height / 2))
+
+    [X, Y] = np.meshgrid(np.arange(-w2, w2 + 1), np.arange(-h2, h2 + 1))
+    X = X / np.max(X)
+    Y = Y / np.max(Y)
+
+    kernel = np.exp(-(np.square(X) + np.square(Y)) / (2 * sigma**2)) / (2 * np.pi * sigma**2)
+    kernel = kernel / np.max(kernel)
     return kernel
 
 

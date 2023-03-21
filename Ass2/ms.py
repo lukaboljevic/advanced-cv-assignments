@@ -35,11 +35,8 @@ def mean_shift(image, start_pos, kernel_size, eps):
     # TODO For now, kernel derivative is constant (i.e. kernel is Epanechnikov)
 
     curr_pos = start_pos
+    print(f"Starting position: row {start_pos[1]}, col {start_pos[0]}\n")
     num_iters = 0
-    # print("Max:", np.max(image))
-    # print(np.argmax(np.max(image, axis=0)))  # column
-    # print(np.argmax(np.max(image, axis=1)))  # row
-    # print(image[70, 50])
 
     while True:
         patch, _ = ut.get_patch(image, curr_pos, kernel_size)
@@ -59,13 +56,19 @@ def mean_shift(image, start_pos, kernel_size, eps):
 
 
 def main(draw=True):
-    image = ut.generate_responses_1()  # max is at start_pos (50, 70) (again, [column, row])
+    # image = ut.generate_responses_1()  # max is at start_pos (50, 70) (again, [column, row])
+    image = ut.generate_responses_2()
+    print("Max val:", np.max(image))
+    col = np.argmax(np.max(image, axis=0))
+    row = np.argmax(np.max(image, axis=1))
+    print(f"Max at row {row}, col {col}: {image[row, col]}\n")
+
     if draw:
         temp = cv2.resize(image*255.0, (400, 400))
         cv2.imshow("Artificial PDF", temp)
         cv2.waitKey(0)
     
-    mean_shift(image, (40, 75), (7, 7), 0.01)
+    mean_shift(image, (60, 40), (7, 7), 0.01)
 
 
 

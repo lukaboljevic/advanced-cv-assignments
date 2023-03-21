@@ -9,19 +9,28 @@ from ms_tracker import MSTracker
 
 # Set the path to the directory with sequences, and choose sequence to test
 dataset_path = "vot2014"
-sequence = "ball"
+sequence_name = "skating"
+# sequence "ball" has a bug, where the number of ground truths is 602, but the number of frames is 603.
+# You can fix that by removing the very first frame, or very last frame. Other sequences are fine.
+
+sigma    = 1  # for Epanechnikov or Gaussian kernel; for Gaussian, you can also specify "auto", and sigma will
+              # be calculated based on the formula 0.3*((min(kernel_shape)-1)*0.5 - 1) + 0.8 (courtesy of OpenCV)
+num_bins = 16  # number of bins used for the target template/candidate histograms
+alpha    = 0.0  # update speed (how much do we update self.q after localizing the target in next frame)
+eps_stop = 1  # stop mean shift iterations when changes in x and y drop below this value
+eps_v    = 1e-3  # used for numerical stability when calculating weights `v` during mean shift
 
 
 # Visualization and setup parameters
-win_name = "Tracking window"
+win_name = f"Tracking window - {sequence_name}"
 reinitialize = True
-show_gt = False
+show_gt = True
 video_delay = 15
 font = cv2.FONT_HERSHEY_PLAIN
 
 
 # Create sequence object
-sequence = VOTSequence(dataset_path, sequence)
+sequence = VOTSequence(dataset_path, sequence_name)
 init_frame = 0
 n_failures = 0
 
@@ -30,12 +39,14 @@ n_failures = 0
 # tracker = NCCTracker(parameters)
 
 kernel_type = "epanechnikov"
+# kernel_type = "gaussian"
 tracker = MSTracker(kernel_type,
-                    sigma=0.5,
-                    num_bins=16,
-                    alpha=0,
-                    eps_stop=1,
-                    eps_v=1e-3)
+                    sigma=sigma,  
+                    num_bins=num_bins,  
+                    alpha=alpha,  
+                    eps_stop=eps_stop,  
+                    eps_v=eps_v  
+                    )
 
 
 # Initialize visualization window
@@ -44,6 +55,7 @@ sequence.initialize_window(win_name)
 # Tracking loop - goes over all frames in the video sequence
 frame_idx = 0
 time_all = 0
+total_overlap = 0
 while frame_idx < sequence.length():
     img = cv2.imread(sequence.frame(frame_idx))
 
@@ -62,17 +74,19 @@ while frame_idx < sequence.length():
 
     # Calculate overlap (needed to determine failure of a tracker)
     gt_bb = sequence.get_annotation(frame_idx, type="rectangle")
-    o = sequence.overlap(predicted_bbox, gt_bb)
+    overlap = sequence.overlap(predicted_bbox, gt_bb)
+    total_overlap += overlap
 
     # Draw ground-truth and predicted bounding boxes, frame numbers and show image
     if show_gt:
         sequence.draw_region(img, gt_bb, (0, 255, 0), 1)
     sequence.draw_region(img, predicted_bbox, (0, 0, 255), 2)
-    sequence.draw_text(img, "%d/%d" % (frame_idx + 1, sequence.length()), (25, 25))
-    sequence.draw_text(img, "Fails: %d" % n_failures, (25, 55))
+    sequence.draw_text(img, "%d/%d" % (frame_idx + 1, sequence.length()), (15, 25))
+    sequence.draw_text(img, "Fails: %d" % n_failures, (15, 55))
     sequence.show_image(img, video_delay)
 
-    if o > 0 or not reinitialize:
+    if overlap > 0 or not reinitialize:  # I'm not really sure if overlap > 0 is appropriate, but just leave it
+    # if overlap > 0.1 or not reinitialize:
         # Increase frame counter by 1
         frame_idx += 1
     else:
@@ -82,5 +96,7 @@ while frame_idx < sequence.length():
         n_failures += 1
 
 
+print(f"Sequence: {dataset_path}/{sequence_name}")
 print("Tracking speed: %.1f FPS" % (sequence.length() / time_all))
 print("Tracker failed %d times" % n_failures)
+print(f"Average overlap: {(total_overlap / sequence.length()):.4f}")
