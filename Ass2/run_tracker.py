@@ -1,18 +1,25 @@
 import time
 
 import cv2
+import numpy as np
 
 from sequence_utils import VOTSequence
 from ncc_tracker_example import NCCTracker, NCCParams
 from ms_tracker import MSTracker
 
 
-# Set the path to the directory with sequences, and choose sequence to test
+# Set the path to the directory with sequences, choose sequence to test
+"""
+Note:
+Sequence "ball" has a bug, where the number of ground truths is 602, but the number of frames is 603.
+You can fix that by removing the very first frame, or very last frame. Other sequences are fine.
+"""
 dataset_path = "vot2014"
-sequence_name = "skating"
-# sequence "ball" has a bug, where the number of ground truths is 602, but the number of frames is 603.
-# You can fix that by removing the very first frame, or very last frame. Other sequences are fine.
+sequence_name = "ball"
 
+# Parameters
+k_type   = "epanechnikov"
+# k_type   = "gaussian"
 sigma    = 1  # for Epanechnikov or Gaussian kernel; for Gaussian, you can also specify "auto", and sigma will
               # be calculated based on the formula 0.3*((min(kernel_shape)-1)*0.5 - 1) + 0.8 (courtesy of OpenCV)
 num_bins = 16  # number of bins used for the target template/candidate histograms
@@ -38,9 +45,7 @@ n_failures = 0
 # parameters = NCCParams()
 # tracker = NCCTracker(parameters)
 
-kernel_type = "epanechnikov"
-# kernel_type = "gaussian"
-tracker = MSTracker(kernel_type,
+tracker = MSTracker(kernel_type=k_type,
                     sigma=sigma,  
                     num_bins=num_bins,  
                     alpha=alpha,  
@@ -55,7 +60,7 @@ sequence.initialize_window(win_name)
 # Tracking loop - goes over all frames in the video sequence
 frame_idx = 0
 time_all = 0
-total_overlap = 0
+overlap_values = []
 while frame_idx < sequence.length():
     img = cv2.imread(sequence.frame(frame_idx))
 
@@ -75,7 +80,7 @@ while frame_idx < sequence.length():
     # Calculate overlap (needed to determine failure of a tracker)
     gt_bb = sequence.get_annotation(frame_idx, type="rectangle")
     overlap = sequence.overlap(predicted_bbox, gt_bb)
-    total_overlap += overlap
+    overlap_values.append(overlap)
 
     # Draw ground-truth and predicted bounding boxes, frame numbers and show image
     if show_gt:
@@ -96,7 +101,10 @@ while frame_idx < sequence.length():
         n_failures += 1
 
 
+avg_overlap = sum(overlap_values) / sequence.length()
+median_overlap = np.median(overlap_values)
 print(f"Sequence: {dataset_path}/{sequence_name}")
 print("Tracking speed: %.1f FPS" % (sequence.length() / time_all))
 print("Tracker failed %d times" % n_failures)
-print(f"Average overlap: {(total_overlap / sequence.length()):.4f}")
+print(f"Mean overlap: {(avg_overlap):.4f}")
+print(f"Median overlap: {(median_overlap):.4f}")

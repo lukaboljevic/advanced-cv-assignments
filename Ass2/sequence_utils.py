@@ -3,6 +3,7 @@ import glob
 
 import numpy as np
 import cv2
+from screeninfo import get_monitors
 
 
 class VOTSequence():
@@ -80,7 +81,13 @@ class VOTSequence():
     # drawing functions
     def initialize_window(self, window_name):
         self.window_name = window_name
+
+        # Create window and move it to the center of the screen
+        monitor = get_monitors()[0]
+        w, h = monitor.width, monitor.height
         cv2.namedWindow(self.window_name, cv2.WINDOW_AUTOSIZE)
+        _, _, img_w, img_h = cv2.getWindowImageRect(self.window_name)
+        cv2.moveWindow(self.window_name, w // 2 - img_w // 2, h // 2 - img_h // 2)
 
     def draw_region(self, img, region, color, line_width):
         if len(region) == 4:
