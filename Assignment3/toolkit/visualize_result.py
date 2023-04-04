@@ -1,11 +1,12 @@
 import argparse
 import os
+import json
 
 from utils.utils import load_tracker, load_dataset 
 from utils.io_utils import read_regions
 
 
-def visualize_tracking_result(workspace_path, tracker_id, sequence_name, show_gt):
+def visualize_tracking_result(workspace_path, tracker_id, sequence_name, show_gt, params_path=None):
 
     dataset = load_dataset(workspace_path)
 
@@ -20,7 +21,12 @@ def visualize_tracking_result(workspace_path, tracker_id, sequence_name, show_gt
         exit(-1)
 
     tracker_class = load_tracker(workspace_path, tracker_id)
-    tracker = tracker_class()
+    if params_path:
+        with open(params_path, "r") as f:
+            params = json.load(f)
+        tracker = tracker_class(**params)
+    else:
+        tracker = tracker_class()
 
     results_path = os.path.join(workspace_path, 'results', tracker.name(), sequence.name, '%s_%03d.txt' % (sequence.name, 1))
     if not os.path.exists(results_path):
@@ -35,12 +41,13 @@ def main():
 
     parser.add_argument('--workspace_path', help='Path to the VOT workspace', required=True, action='store')
     parser.add_argument('--tracker', help='Tracker identifier', required=True, action='store')
+    parser.add_argument('--params_path', help='Path to correlation filter params JSON file', required=False)
     parser.add_argument('--sequence', help='Sequence name', required=True, action='store')
     parser.add_argument('--show_gt', help='Show groundtruth annotations', required=False, action='store_true')
 
     args = parser.parse_args()
 
-    visualize_tracking_result(args.workspace_path, args.tracker, args.sequence, args.show_gt)
+    visualize_tracking_result(args.workspace_path, args.tracker, args.sequence, args.show_gt, args.params_path)
 
 if __name__ == "__main__":
     main()

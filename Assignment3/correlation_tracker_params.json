@@ -1,0 +1,6 @@
+{
+    "sigma": 2,
+    "lmbd": 0,
+    "alpha": 0.1,
+    "enlarge_factor": 1.5
+}

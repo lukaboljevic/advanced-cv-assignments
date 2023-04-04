@@ -10,3 +10,6 @@ ncc_tracker:  # use tracker identifier as you want to call your tracker from ter
 # tracker_2:
 #   tracker_path: ...
 #   class_name: ...
+correlation_tracker:
+  tracker_path: ../toolkit/examples/correlation_tracker.py
+  class_name: CorrelationTracker

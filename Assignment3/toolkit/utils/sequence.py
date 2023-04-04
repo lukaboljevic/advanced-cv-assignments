@@ -3,7 +3,7 @@ import glob
 import cv2
 import numpy as np
 
-from utils.utils import polygon2rectangle
+from utils.utils import polygon2rectangle, rectangle2polygon
 from utils.io_utils import read_regions
 
 
@@ -75,6 +75,7 @@ class Sequence():
         print('')
         print('Red rectangle: tracker\'s predicted region.')
         print('Green rectangle: ground-truth annotations.')
+        print('Enable ground-truth annotations with --show-gt flag.')
         print('********************************************************')
 
         win_name = 'Window'

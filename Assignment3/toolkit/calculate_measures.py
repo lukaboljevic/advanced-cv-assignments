@@ -1,17 +1,23 @@
 import argparse
 import os
+import json
 
 from utils.utils import load_tracker, load_dataset, trajectory_overlaps, count_failures, average_time
 from utils.io_utils import read_regions, read_vector
 from utils.export_utils import export_measures
 
 
-def tracking_analysis(workspace_path, tracker_id):
+def tracking_analysis(workspace_path, tracker_id, params_path=None):
 
     dataset = load_dataset(workspace_path)
 
     tracker_class = load_tracker(workspace_path, tracker_id)
-    tracker = tracker_class()
+    if params_path:
+        with open(params_path, "r") as f:
+            params = json.load(f)
+        tracker = tracker_class(**params)
+    else:
+        tracker = tracker_class()
 
     print('Performing evaluation for tracker:', tracker.name())
 
@@ -48,10 +54,11 @@ def main():
 
     parser.add_argument('--workspace_path', help='Path to the VOT workspace', required=True, action='store')
     parser.add_argument('--tracker', help='Tracker identifier', required=True, action='store')
+    parser.add_argument('--params_path', help='Path to correlation filter params JSON file', required=False)
 
     args = parser.parse_args()
 
-    tracking_analysis(args.workspace_path, args.tracker)
+    tracking_analysis(args.workspace_path, args.tracker, args.params_path)
 
 if __name__ == "__main__":
     main()

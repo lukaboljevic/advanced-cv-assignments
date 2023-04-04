@@ -63,3 +63,23 @@ def get_patch(image, center, size):
     crop_mask = cv2.copyMakeBorder(crop_mask, y0_pad, y1_pad, x0_pad, x1_pad, cv2.BORDER_CONSTANT, value=0)
 
     return im_crop_padded, crop_mask
+
+
+if __name__ == "__main__":
+    from screeninfo import get_monitors
+    monitor = get_monitors()[0]
+    w, h = monitor.width, monitor.height
+
+    resize_to = 400  # resize Gaussian response to this size
+    center_x = w // 2 - resize_to // 2
+    center_y = h // 2 - resize_to // 2
+
+    sigma = 5
+    size = 15
+    response = create_gauss_peak((size, size), sigma)
+    response = cv2.resize(response, (resize_to, resize_to))
+
+    window_name = f"Gaussian peak - size = {size}, sigma = {sigma}"
+    cv2.imshow(window_name, response)
+    cv2.moveWindow(window_name, center_x, center_y)
+    cv2.waitKey(0)
