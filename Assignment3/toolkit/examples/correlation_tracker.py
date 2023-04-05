@@ -54,7 +54,7 @@ class CorrelationTracker(Tracker):
         
     
     def name(self):
-        return f"correlation-{self.enlarge_factor}ef-{self.sigma}s-{self.alpha}a-{self.lmbd}l"
+        return f"correlation-{self.enlarge_factor}ef-{self.sigma}sig-{self.alpha}al-{self.lmbd}lmb"
 
 
     def compute_H(self, F):
@@ -108,7 +108,7 @@ class CorrelationTracker(Tracker):
         if enlarged_height % 2 == 0:
             enlarged_height -= 1
         self.search_size = (enlarged_width, enlarged_height)
-        # enlarged_size = (max(region[2], region[3]) * self.enlarge_factor)
+        # enlarged_size = round(max(region[2], region[3]) * self.enlarge_factor)
         # if enlarged_size % 2 == 0:
         #     enlarged_size -= 1
         # self.search_size = (enlarged_size, enlarged_size)

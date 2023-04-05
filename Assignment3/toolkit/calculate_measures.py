@@ -24,6 +24,7 @@ def tracking_analysis(workspace_path, tracker_id, params_path=None):
     per_seq_overlaps = len(dataset.sequences) * [0]
     per_seq_failures = len(dataset.sequences) * [0]
     per_seq_time = len(dataset.sequences) * [0]
+    per_seq_init_time = len(dataset.sequences) * [0]
 
     for i, sequence in enumerate(dataset.sequences):
         
@@ -35,18 +36,25 @@ def tracking_analysis(workspace_path, tracker_id, params_path=None):
         if not os.path.exists(time_path):
             print('Time file does not exist (%s).' % time_path)
 
+        init_time_path = os.path.join(workspace_path, 'results', tracker.name(), sequence.name, '%s_%03d_init_time.txt' % (sequence.name, 1))
+        if not os.path.exists(init_time_path):
+            print('Initialization times file does not exist (%s).' % init_time_path)
+
         regions = read_regions(results_path)
         times = read_vector(time_path)
+        init_times = read_vector(init_time_path)
 
         overlaps, overlap_valid = trajectory_overlaps(regions, sequence.groundtruth)
         failures = count_failures(regions)
         t = average_time(times, regions)
+        avg_init_time = sum(init_times) / len(init_times)
 
         per_seq_overlaps[i] = sum(overlaps) / sum(overlap_valid)
         per_seq_failures[i] = failures
         per_seq_time[i] = t
+        per_seq_init_time[i] = avg_init_time
     
-    return export_measures(workspace_path, dataset, tracker, per_seq_overlaps, per_seq_failures, per_seq_time)
+    return export_measures(workspace_path, dataset, tracker, per_seq_overlaps, per_seq_failures, per_seq_time, per_seq_init_time)
 
 
 def main():

@@ -75,6 +75,7 @@ class Sequence():
         print('')
         print('Red rectangle: tracker\'s predicted region.')
         print('Green rectangle: ground-truth annotations.')
+        print()
         print('Enable ground-truth annotations with --show-gt flag.')
         print('********************************************************')
 
