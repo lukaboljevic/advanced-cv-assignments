@@ -48,7 +48,7 @@ def export_plot(outputs, sensitivity, output_path):
     print('The AR plot is saved to the file:', output_path)
 
 def export_measures(workspace_path: str, dataset: Dataset, tracker: Tracker, overlaps: list,
-                    failures: list, times: list, init_times: list):  # per sequence average init time
+                    failures: list, times: list, init_times: list):
     
     # create per-sequence output structure
     init_speed = len(dataset.sequences) * [0]
