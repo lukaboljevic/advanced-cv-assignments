@@ -10,7 +10,7 @@ workspace_path = "../workspace-vot2014"
 tracker = "correlation_tracker"
 params_path = "../correlation_tracker_params.json"
 
-sigmas = [1, 2, 3, 4]
+sigmas = [0.5, 1, 2, 3, 4, 5]
 alphas = [0.02, 0.05, 0.1, 0.15, 0.2]
 enlarge_factors = [1, 1.5, 2, 2.5]
 lmbd = 0
