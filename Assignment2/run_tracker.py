@@ -6,6 +6,7 @@ import numpy as np
 from sequence_utils import VOTSequence
 from ncc_tracker_example import NCCTracker, NCCParams
 from ms_tracker import MSTracker
+from correlation_tracker import CorrelationTracker  # Part of Assignment 3, not Assignment 2
 
 
 # Set the path to the directory with sequences, choose sequence to test
@@ -17,7 +18,8 @@ You can fix that by removing the very first frame, or very last frame. Other seq
 dataset_path = "vot2014"
 sequence_name = "ball"
 
-# Parameters
+
+# Parameters for MS tracker
 k_type   = "epanechnikov"
 # k_type   = "gaussian"
 sigma    = 1  # for Epanechnikov or Gaussian kernel; for Gaussian, you can also specify "auto", and sigma will
@@ -26,6 +28,13 @@ num_bins = 16  # number of bins used for the target template/candidate histogram
 alpha    = 0.0  # update speed (how much do we update self.q after localizing the target in next frame)
 eps_stop = 1  # stop mean shift iterations when changes in x and y drop below this value
 eps_v    = 1e-3  # used for numerical stability when calculating weights `v` during mean shift
+
+
+# Parameters for correlation tracker (part of Assignment 3)
+# sigma          = 2  # sigma for ideal Gaussian response
+# lmbd           = 0  # controls how large values in filter H are (check cost formula function)
+# alpha          = 0.1  # update speed for filter H
+# enlarge_factor = 1.5  # by how much our target search region is enlarged
 
 
 # Visualization and setup parameters
@@ -50,8 +59,15 @@ tracker = MSTracker(kernel_type=k_type,
                     num_bins=num_bins,  
                     alpha=alpha,  
                     eps_stop=eps_stop,  
-                    eps_v=eps_v  
+                    eps_v=eps_v
                     )
+
+# Correlation tracker is part of Assignment 3
+# tracker = CorrelationTracker(sigma=sigma,
+#                              lmbd=lmbd,
+#                              alpha=alpha,
+#                              enlarge_factor=enlarge_factor
+#                              )
 
 
 # Initialize visualization window
