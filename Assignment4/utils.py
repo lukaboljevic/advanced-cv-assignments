@@ -141,6 +141,21 @@ def epanechnikov_kernel(width, height, sigma):
     return kernel
 
 
+def extract_and_normalize_hist(patch, nbins, weights=None):
+    """
+    Wrapper function that first calls `extract_histogram`, and then `normalize_histogram`.
+
+    Copied from `extract_histogram` doc comment:
+    "Extract a color histogram form a given patch, where the number of bins is the number of
+    colors in the reduced color space.
+
+    Note that the input patch must be a BGR image (3 channel numpy array). The function 
+    thus returns a histogram nbins**3 bins."
+    """
+    histogram = extract_histogram(patch, nbins, weights)
+    return normalize_histogram(histogram)
+
+
 def normalize_histogram(histogram):
     """
     Normalize a histogram, so that the sum of values is 1.

@@ -31,8 +31,8 @@ of the kernel in play. If we use Epanechnikov kernel, then this kernel derivativ
 Check out the implementation details on slides too.
 """
 class MSTracker(ut.Tracker):
-    def __init__(self, kernel_type="epanechnikov", **params):
-        self.kernel_type = kernel_type
+    def __init__(self, **params):
+        self.kernel_type = params.get("kernel_type", "epanechnikov")  # specify kernel type
         self.sigma = params.get("sigma", 1)  # for Epanechnikov or Gaussian kernel
         self.num_bins = params.get("num_bins", 16)  # number of bins used for the target template/candidate histograms
         self.alpha = params.get("alpha", 0)  # for updating target template (so called update speed)
@@ -78,9 +78,7 @@ class MSTracker(ut.Tracker):
         else:
             raise ValueError(f"Unrecognized kernel type {self.kernel_type}")
         
-        self.q = ut.normalize_histogram(
-            ut.extract_histogram(self.template, self.num_bins, self.kernel)
-        )
+        self.q = ut.extract_and_normalize_hist(self.template, self.num_bins, self.kernel)
 
         # Create these here, since they don't change across mean shift iterations (unless tracker is reinitalized)
         self.coords_x, self.coords_y = ut.coordinates_kernels(self.size)
@@ -91,8 +89,7 @@ class MSTracker(ut.Tracker):
         num_iters = 0
         while num_iters < 20:
             patch, _ = ut.get_patch(image, curr_pos, self.size)
-            p = ut.extract_histogram(patch, self.num_bins, self.kernel)
-            p = ut.normalize_histogram(p)
+            p = ut.extract_and_normalize_hist(patch, self.num_bins, self.kernel)
             v = np.sqrt(np.divide(self.q, p + self.eps_v))
             w = ut.backproject_histogram(patch, v, self.num_bins)
 
@@ -115,8 +112,7 @@ class MSTracker(ut.Tracker):
 
         # Update target template and its histogram representation
         self.template, _ = ut.get_patch(image, self.position, self.size)
-        q_new = ut.extract_histogram(self.template, self.num_bins, self.kernel)
-        q_new = ut.normalize_histogram(q_new)
+        q_new = ut.extract_and_normalize_hist(self.template, self.num_bins, self.kernel)
         self.q = (1 - self.alpha) * self.q + self.alpha * q_new
 
         # Return the position of the top left corner + width and height of predicted box

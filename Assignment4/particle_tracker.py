@@ -6,12 +6,12 @@ import utils as ut
 
 class ParticleTracker(ut.Tracker):
     def __init__(self, **params):
-        self.num_particles = 100  # number of particles
-        self.q = 5 # power spectral density of system covariance matrix Q
-        self.alpha = 0  # update speed
-        self.sigma = 1  # Sigma for Epanechnikov kernel
-        self.dist_sigma = 0.1  # Sigma for converting distance into probability
-        self.num_bins = 32  # Number of bins when extracting histograms from patches
+        self.num_particles = params.get("num_particles", 100)  # number of particles
+        self.q = params.get("q", 5)  # power spectral density of system covariance matrix Q
+        self.alpha = params.get("alpha", 0)  # update speed
+        self.sigma = params.get("sigma", 1)  # Sigma for Epanechnikov kernel
+        self.dist_sigma = params.get("dist_sigma", 0.1)  # Sigma for converting distance into probability
+        self.num_bins = params.get("num_bins", 16)  # Number of bins when extracting histograms from patches
 
         self.Fi, self.Q = self.system_matrices()  # system matrix Fi and system covariance mtx Q
         self.dim = self.Fi.shape[0]  # number of dimensions of our state
@@ -102,8 +102,7 @@ class ParticleTracker(ut.Tracker):
 
         # Epanechnikov kernel and target histogram
         self.kernel = ut.epanechnikov_kernel(self.bbox_size[0], self.bbox_size[1], self.sigma)
-        self.target_histogram = ut.extract_histogram(self.target_patch, self.num_bins, self.kernel)
-        self.target_histogram = ut.normalize_histogram(self.target_histogram)
+        self.target_histogram = ut.extract_and_normalize_hist(self.target_patch, self.num_bins, self.kernel)
 
         # Initialize particles and their weights
         mean = np.zeros(self.Q.shape[0])
@@ -140,9 +139,7 @@ class ParticleTracker(ut.Tracker):
         # Recalculate particle weights
         for i, particle in enumerate(self.particles):
             patch, _ = ut.get_patch(image, (particle[0], particle[2]), self.bbox_size)
-            patch_hist = ut.normalize_histogram(
-                ut.extract_histogram(patch, self.num_bins, self.kernel)
-            )
+            patch_hist = ut.extract_and_normalize_hist(patch, self.num_bins, self.kernel)
             hellinger = self.hellinger_distance(patch_hist)
             probability = self.dist_to_prob(hellinger)
 
@@ -159,8 +156,7 @@ class ParticleTracker(ut.Tracker):
 
         # Update target histogram
         self.target_patch, _ = ut.get_patch(image, self.position, self.bbox_size)
-        new_histogram = ut.extract_histogram(self.target_patch, self.num_bins, self.kernel)
-        new_histogram = ut.normalize_histogram(new_histogram)
+        new_histogram = ut.extract_and_normalize_hist(self.target_patch, self.num_bins, self.kernel)
         self.target_histogram = (1 - self.alpha) * self.target_histogram + self.alpha * new_histogram
 
         # Return the position of the top left corner + width and height of target bounding box
