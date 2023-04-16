@@ -65,6 +65,86 @@ def get_patch(image, center, size):
     return im_crop_padded, crop_mask
 
 
+def sample_gauss(mu, sigma, n):
+    """
+    Sample n samples from a multivariate normal distribution.
+
+    Copied from Assignment 4.
+    """
+    return np.random.multivariate_normal(mu, sigma, n)
+
+
+def epanechnikov_kernel(width, height, sigma):
+    """
+    Create Epanechnikov kernel of given size.
+
+    Width and height need to be odd.
+
+    Copied from Assignment 2.
+    """
+    w2 = int(math.floor(width / 2))
+    h2 = int(math.floor(height / 2))
+
+    [X, Y] = np.meshgrid(np.arange(-w2, w2 + 1), np.arange(-h2, h2 + 1))
+    X = X / np.max(X)
+    Y = Y / np.max(Y)
+
+    kernel = (1 - ((X / sigma)**2 + (Y / sigma)**2))
+    kernel = kernel / np.max(kernel)
+    kernel[kernel < 0] = 0
+    return kernel
+
+
+def extract_and_normalize_hist(patch, nbins, weights=None):
+    """
+    Wrapper function that first calls `extract_histogram`, and then `normalize_histogram`.
+
+    Copied from `extract_histogram` doc comment:
+    "Extract a color histogram form a given patch, where the number of bins is the number of
+    colors in the reduced color space.
+
+    Note that the input patch must be a BGR image (3 channel numpy array). The function 
+    thus returns a histogram nbins**3 bins."
+    """
+    histogram = extract_histogram(patch, nbins, weights)
+    return normalize_histogram(histogram)
+
+
+def normalize_histogram(histogram):
+    """
+    Normalize a histogram, so that the sum of values is 1.
+    """
+    return histogram / np.sum(histogram)
+
+
+def extract_histogram(patch, nbins, weights=None):
+    """
+    Extract a color histogram form a given patch, where the number of bins is the number of
+    colors in the reduced color space.
+
+    Note that the input patch must be a BGR image (3 channel numpy array). The function 
+    thus returns a histogram nbins**3 bins.
+
+    Copied from Assignment 2.
+    """
+
+    # Convert each pixel intensity to the one of nbins bins
+    channel_bin_idxs = np.floor((patch.astype(np.float32) / float(255)) * float(nbins - 1))
+    # Calculate bin index of a 3D histogram
+    bin_idxs = (channel_bin_idxs[:, :, 0] * nbins**2  + channel_bin_idxs[:, :, 1] * nbins + channel_bin_idxs[:, :, 2]).astype(np.int32)
+
+    # Count bin indices to create histogram (use per-pixel weights if given)
+    if weights is not None:
+        histogram_ = np.bincount(bin_idxs.flatten(), weights=weights.flatten())
+    else:
+        histogram_ = np.bincount(bin_idxs.flatten())
+    
+    # Zero-pad histogram (needed since bincount function does not generate histogram with nbins**3 elements)
+    histogram = np.zeros((nbins**3, 1), dtype=histogram_.dtype).flatten()
+    histogram[:histogram_.size] = histogram_
+    return histogram
+
+
 if __name__ == "__main__":
     from screeninfo import get_monitors
     monitor = get_monitors()[0]

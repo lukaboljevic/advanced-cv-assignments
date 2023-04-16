@@ -13,3 +13,7 @@ ncc_tracker:  # use tracker identifier as you want to call your tracker from ter
 correlation_tracker:
   tracker_path: ../toolkit/examples/correlation_tracker.py
   class_name: CorrelationTracker
+
+particle_tracker:
+  tracker_path: ../toolkit/examples/particle_tracker.py
+  class_name: ParticleTracker

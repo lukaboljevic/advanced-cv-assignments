@@ -1,10 +1,12 @@
 import numpy as np
 import sympy as sp
 
-import utils as ut
+
+from utils.tracker import Tracker
+import utils.my_utils as ut
 
 
-class ParticleTracker(ut.Tracker):
+class ParticleTracker(Tracker):
     def __init__(self, **params):
         self.num_particles = params.get("num_particles", 100)  # number of particles
         self.q = params.get("q", 5)  # power spectral density of system covariance matrix Q
@@ -15,6 +17,10 @@ class ParticleTracker(ut.Tracker):
 
         self.Fi, self.Q = self.system_matrices()  # system matrix Fi and system covariance mtx Q
         self.dim = self.Fi.shape[0]  # number of dimensions of our state
+
+
+    def name(self):
+        return f"particle-{self.num_particles}N-{self.q}q-{self.alpha}al-{self.dist_sigma}dsig-{self.num_bins}nbins"
     
 
     def system_matrices(self):

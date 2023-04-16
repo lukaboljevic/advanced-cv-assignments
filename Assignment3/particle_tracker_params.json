@@ -1,0 +1,8 @@
+{
+    "num_particles": 75,
+    "q": 1,
+    "alpha": 0,
+    "sigma": 1,
+    "dist_sigma": 0.1,
+    "num_bins": 16
+}

@@ -13,7 +13,7 @@ def print_summary(output_dict):
     print('-----------------------------------------------------')
     print('Results for tracker:', output_dict['tracker_name'])
     print('  Average overlap: %.2f' % output_dict['average_overlap'])
-    print('  Total failures: %.1f' % output_dict['total_failures'])
+    print('  Total failures: %d' % output_dict['total_failures'])
     print('  Average speed: %.2f FPS' % output_dict['average_speed'])
     print('  Average init speed: %.2f FPS' % output_dict['average_init_speed'])
     print('-----------------------------------------------------')
