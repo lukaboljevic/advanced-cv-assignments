@@ -1,3 +1,14 @@
+# Table of Contents <!-- omit in toc -->
+
+- [Derivation of matrices for Kalman filter, based on motion model](#derivation-of-matrices-for-kalman-filter-based-on-motion-model)
+  - [Notes](#notes)
+- [Random Walk](#random-walk)
+- [Nearly Constant Velocity](#nearly-constant-velocity)
+- [Nearly Constant Acceleration](#nearly-constant-acceleration)
+- [Summary](#summary)
+
+
+
 # Derivation of matrices for Kalman filter, based on motion model
 
 As Kalman step is already implemented for us in this assignment, all we need to do is choose the motion model (RW, NCV, NCA), and define the following:
