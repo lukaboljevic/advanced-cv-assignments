@@ -5,6 +5,7 @@ from math import ceil
 import numpy as np
 import cv2
 from screeninfo import get_monitors
+from utils import NCV
 
 
 class VOTSequence():
@@ -112,11 +113,11 @@ class VOTSequence():
         cv2.rectangle(img, tl_, br_, (0, 0, 0), cv2.FILLED)
         cv2.putText(img, text, text_pos, font, 1, (255, 255, 255), 1, cv2.LINE_AA, False)
 
-    def draw_particles(self, img, particles, weights):
+    def draw_particles(self, img, particles, weights, motion_model=NCV):
         # Assume NCV motion model for now
         for particle, weight in zip(particles, weights):
             center_x = round(particle[0])
-            center_y = round(particle[2])
+            center_y = round(particle[motion_model])
             cv2.circle(img, (center_x, center_y), ceil(150*weight), (30, 200, 50), cv2.FILLED)
 
     def show_image(self, img, delay):

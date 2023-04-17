@@ -2,11 +2,7 @@ import math
 import numpy as np
 import sympy as sp
 import matplotlib.pyplot as plt
-from utils import kalman_step
-
-RW = 1
-NCV = 2
-NCA = 3
+from utils import kalman_step, RW, NCV, NCA
 
 
 def define_matrices(motion_model, q, r):

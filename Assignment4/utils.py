@@ -3,6 +3,12 @@ import numpy as np
 import cv2
 
 
+# Motion model constants
+RW = 1
+NCV = 2
+NCA = 3
+
+
 def kalman_step(A, C, Q, R, y, x, V):
     """
     Perform Kalman filter prediction and update.

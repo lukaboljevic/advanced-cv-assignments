@@ -1,11 +1,13 @@
 import numpy as np
 import sympy as sp
 
+from utils import RW, NCV, NCA
 import utils as ut
 
 
 class ParticleTracker(ut.Tracker):
     def __init__(self, **params):
+        self.motion_model = params.get("motion_model", NCV)  # motion model to use
         self.num_particles = params.get("num_particles", 100)  # number of particles
         self.q = params.get("q", 5)  # power spectral density of system covariance matrix Q
         self.alpha = params.get("alpha", 0)  # update speed
@@ -25,20 +27,56 @@ class ParticleTracker(ut.Tracker):
         """
         T = sp.symbols("T")
 
-        # State is defined as X = [x, x', y, y']^T
-        # x' and y' denote the velocities in x and y directions
-        F = sp.Matrix([
-            [0, 1, 0, 0],
-            [0, 0, 0, 0],
-            [0, 0, 0, 1],
-            [0, 0, 0, 0],
-        ])
-        L = sp.Matrix([
-            [0, 0],
-            [1, 0],
-            [0, 0],
-            [0, 1]
-        ])
+        if self.motion_model == RW:
+            # State is defined as X = [x, y]^T
+            F = sp.Matrix([
+                [0, 0],
+                [0, 0]
+            ])
+            L = sp.Matrix([
+                [1, 0],
+                [0, 1]
+            ])
+
+        elif self.motion_model == NCV:
+            # State is defined as X = [x, x', y, y']^T
+            # x' and y' denote the velocities in x and y directions
+            F = sp.Matrix([
+                [0, 1, 0, 0],
+                [0, 0, 0, 0],
+                [0, 0, 0, 1],
+                [0, 0, 0, 0],
+            ])
+            L = sp.Matrix([
+                [0, 0],
+                [1, 0],
+                [0, 0],
+                [0, 1]
+            ])
+
+        elif self.motion_model == NCA:
+            # State is defined as X = [x, x', x'', y, y', y'']^T
+            # x' and y' denote the velocities in x and y directions
+            # x'' and y'' denote the accelerations in x and y directions
+            F = sp.Matrix([
+                [0, 1, 0, 0, 0, 0],
+                [0, 0, 1, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 1, 0],
+                [0, 0, 0, 0, 0, 1],
+                [0, 0, 0, 0, 0, 0]
+            ])
+            L = sp.Matrix([
+                [0, 0],
+                [0, 0],
+                [1, 0],
+                [0, 0],
+                [0, 0],
+                [0, 1]
+            ])
+        
+        else:
+            raise ValueError("Unsupported value for motion model.")
 
         # Calculate Fi, based on lecture slides
         Fi = sp.exp(F * T)
@@ -111,11 +149,11 @@ class ParticleTracker(ut.Tracker):
         self.normalize_particle_weights()
         self.particles = np.zeros((self.num_particles, self.dim))
         
-        # For NCV motion model, state is [x, x', y, y']^T
         # Initial x coordinate of all particles is x coordinate of target center + noise
         # Similar idea applies to y coordinate
+        # Based on motion model, the y coordinate is found in a different place in the particle state
         self.particles[:, 0] = self.position[0] + noise[:, 0]
-        self.particles[:, 2] = self.position[1] + noise[:, 2]
+        self.particles[:, self.motion_model] = self.position[1] + noise[:, self.motion_model]
 
 
     def track(self, image):
@@ -134,11 +172,12 @@ class ParticleTracker(ut.Tracker):
         # out of bounds, ut.get_patch returns a patch of other size, and then extract_histogram
         # fails.
         self.particles[:, 0] = np.clip(self.particles[:, 0], 0, image.shape[1] - 1)  # image.shape[1] is width
-        self.particles[:, 2] = np.clip(self.particles[:, 2], 0, image.shape[0] - 1)  # image.shape[0] is height
+        self.particles[:, self.motion_model] = \
+            np.clip(self.particles[:, self.motion_model], 0, image.shape[0] - 1)  # image.shape[0] is height
 
         # Recalculate particle weights
         for i, particle in enumerate(self.particles):
-            patch, _ = ut.get_patch(image, (particle[0], particle[2]), self.bbox_size)
+            patch, _ = ut.get_patch(image, (particle[0], particle[self.motion_model]), self.bbox_size)
             patch_hist = ut.extract_and_normalize_hist(patch, self.num_bins, self.kernel)
             hellinger = self.hellinger_distance(patch_hist)
             probability = self.dist_to_prob(hellinger)
@@ -151,7 +190,7 @@ class ParticleTracker(ut.Tracker):
             
         # Calculate new position of target as weighted mean of particle positions
         new_x = np.average(self.particles[:, 0], weights=self.particle_weights)
-        new_y = np.average(self.particles[:, 2], weights=self.particle_weights)
+        new_y = np.average(self.particles[:, self.motion_model], weights=self.particle_weights)
         self.position = (new_x, new_y)
 
         # Update target histogram

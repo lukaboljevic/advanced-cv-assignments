@@ -5,15 +5,15 @@ import numpy as np
 
 from sequence_utils import VOTSequence
 from particle_tracker import ParticleTracker
+from utils import RW, NCV, NCA
 
 
-def run_tracker(tracker_class, tracker_params, dataset_path, sequence_name):
+def run_tracker(tracker_params, dataset_path, sequence_name):
     """
-    Run and print results of tracker.
+    Run and print results of particle tracker.
 
     Parameters
     ----------
-    tracker_class : Tracker class (eg. MSTracker, CorrelationTracker)
     tracker_params : Parameters for the tracker as a dictionary
     dataset_path : Path to the dataset with sequences
     sequence_name :  Dataset sequence to test the tracker on
@@ -24,8 +24,8 @@ def run_tracker(tracker_class, tracker_params, dataset_path, sequence_name):
     Sequence "vot2014/ball" has a bug, where the number of ground truths is 602, but the number of frames
     is 603. You can fix that by removing the very first frame, or very last frame. Other sequences are fine.
     """
-    # Initialize tracker object
-    tracker = tracker_class(**tracker_params)
+    # Initialize particle tracker object
+    tracker = ParticleTracker(**tracker_params)
 
 
     # Visualization and setup parameters
@@ -77,7 +77,7 @@ def run_tracker(tracker_class, tracker_params, dataset_path, sequence_name):
         sequence.draw_region(img, predicted_bbox, (0, 0, 255), 2)
         sequence.draw_text(img, "%d/%d" % (frame_idx + 1, sequence.length()), (15, 25))
         sequence.draw_text(img, "Fails: %d" % n_failures, (15, 55))
-        sequence.draw_particles(img, tracker.particles, tracker.particle_weights)
+        sequence.draw_particles(img, tracker.particles, tracker.particle_weights, tracker.motion_model)
         sequence.show_image(img, video_delay)
 
         if overlap > 0 or not reinitialize:  # I'm not really sure if overlap > 0 is appropriate, but just leave it
@@ -110,13 +110,24 @@ if __name__ == "__main__":
     # dist_sigma should always be ~0.1 as it converts distance to probability the nicest:
     # https://www.desmos.com/calculator/eifdw6hevn
     particle_params = {
-        "num_particles":    100,  # number of particles
-        "q":                5,  # power spectral density of system covariance matrix Q
-        "alpha":            0,  # update speed
+        "motion_model":     NCV,  # motion model to use
+        "num_particles":    125,  # number of particles
+        "q":                3,  # power spectral density of system covariance matrix Q
+        "alpha":            0.01,  # update speed
         "sigma":            1,  # Sigma for Epanechnikov kernel
         "dist_sigma":       0.1,  # Sigma^2 for converting distance into probability
         "num_bins":         16,  # Number of bins when extracting histograms from patches
     }
 
     # Run the tracker
-    run_tracker(ParticleTracker, particle_params, dataset_path, sequence_name)
+    run_tracker(particle_params, dataset_path, sequence_name)
+
+    """
+    Best particle tracker by number of failures:
+        Name: particle-150N-3q-0.01al-0.1dsig-16nbins
+        Failures: 39
+        Overlap: 0.47230058354720456
+        Average speed: 43.55 FPS
+        Average init speed: 1556.46 FPS
+        Robustness: 0.68
+    """
