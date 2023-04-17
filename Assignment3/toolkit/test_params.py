@@ -4,6 +4,7 @@ import os
 
 from evaluate_tracker import evaluate_tracker
 from calculate_measures import tracking_analysis
+from utils.my_utils import RW, NCV, NCA
 
 
 def test_correlation():
@@ -68,6 +69,7 @@ def test_particle():
     tracker = "particle_tracker"
     params_path = "../particle_tracker_params.json"
     
+    motion_model = NCV
     num_particles_list = [75, 100, 125, 150]
     qs = [1, 3, 5, 10, 15]
     alphas = [0, 0.001, 0.01, 0.05, 0.1]
@@ -83,7 +85,8 @@ def test_particle():
         print(f"Testing tracker {i+1} / {len(combinations)}")
 
         num_particles, q, alpha, num_bins = combinations[i]
-        tracker_name = f"particle-{num_particles}N-{q}q-{alpha}al-{dist_sigma}dsig-{num_bins}nbins"
+        mm = "RW" if motion_model == RW else "NCV" if motion_model == NCV else "NCA"
+        tracker_name = f"particle-{mm}mm-{num_particles}N-{q}q-{alpha}al-{dist_sigma}dsig-{num_bins}nbins"
         print(f"Tracker name: {tracker_name}")
 
         analysis_path = f"{workspace_path}/analysis/{tracker_name}"
@@ -91,6 +94,7 @@ def test_particle():
             continue
 
         params = {
+            "motion_model": motion_model,
             "num_particles": num_particles,
             "q": q,
             "alpha": alpha,
