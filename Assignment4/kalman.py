@@ -119,13 +119,37 @@ def spiral_trajectory(N):
     return x, y
 
 
+def star_trajectory():
+    x = [14, 13.2, 10, 13,  11, 14,  17, 15,  18, 14.8, 14]
+    y = [16, 12,   12, 9.5, 5,  7.5, 5,  9.5, 12, 12,   16]
+
+    return np.array(x), np.array(y)
+
+
+def cv_trajectory():
+    x_c = [10, 4,  4, 10, 10, 6, 6, 10, 10]
+    y_c = [10, 10, 0, 0,  2,  2, 8, 8,  10]
+
+    x_v = [10, 13, 15, 18, 16, 14, 12, 10]
+    y_v = [10, 0,  0,  10, 10, 2,  10, 10]
+
+    x = x_c + x_v[1:]
+    y = y_c + y_v[1:]
+
+    return np.array(x), np.array(y)
+
+
 def main(motion_model, q, r, N):
-    # Artificial spiral trajectory
-    x, y = spiral_trajectory(N)
+    # Artificial trajectory
+    # x, y = spiral_trajectory(N)
+    # x, y = star_trajectory()
+    x, y = cv_trajectory()
+
 
     plt.figure(figsize=(8, 7))
     plt.plot(x, y, color="firebrick", label="Original")
     plt.scatter(x, y, marker="o", facecolors="none", edgecolors="firebrick", s=30)
+    plt.scatter(x[0], y[0], marker="x", color="black", s=150, label="Starting pos")
 
     # Matrices for Kalman filter
     Fi, H, Q, R = define_matrices(motion_model, q, r)
@@ -175,8 +199,8 @@ def main(motion_model, q, r, N):
 
 if __name__ == "__main__":
     motion_model = NCV
-    q = 1
+    q = 100
     r = 1
-    N = 40
+    N = 1
 
     main(motion_model, q, r, N)
