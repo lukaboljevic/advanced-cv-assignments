@@ -1,17 +1,22 @@
 import os
 import json
+import math
 
 
 def show_top(array, n, type):
+    sensitivity = 100
+
     print(f"####### Sorted by {type} #######\n")
     for i in range(n):
         curr = array[i]
+        robustness = math.exp(- sensitivity * (float(curr["total_failures"]) / float(curr["total_frames"])))
         print(f"Rank {i+1}")
         print(f"   Name: {curr['tracker_name']}")
         print(f"   Failures: {curr['total_failures']}")
         print(f"   Overlap: {curr['average_overlap']}")
         print(f"   Average speed: {(curr['average_speed']):.2f} FPS")
         print(f"   Average init speed: {(curr['average_init_speed']):.2f} FPS")
+        print(f"   Robustness: {robustness:.2f}")
         print()
     print("--------------------------------------------------")
     print("--------------------------------------------------")

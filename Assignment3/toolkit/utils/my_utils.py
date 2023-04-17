@@ -3,6 +3,12 @@ import cv2
 import numpy as np
 
 
+# Particle tracker motion model constants
+RW = 1
+NCV = 2
+NCA = 3
+
+
 def create_cosine_window(target_size):
     """
     Create a cosine (Hanning) window. Parameter target_size is in the format 

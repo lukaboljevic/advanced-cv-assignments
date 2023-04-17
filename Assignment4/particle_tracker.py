@@ -21,9 +21,7 @@ class ParticleTracker(ut.Tracker):
 
     def system_matrices(self):
         """
-        Calculate system matrices Fi (Φ) and Q (covariance) for NCV motion model.
-
-        Note to self: Add other motion models in the future.
+        Calculate system matrices Fi (Φ) and Q (covariance) based on motion model.
         """
         T = sp.symbols("T")
 
