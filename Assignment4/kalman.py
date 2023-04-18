@@ -120,6 +120,9 @@ def spiral_trajectory(N):
 
 
 def star_trajectory():
+    """
+    Create a star trajectory.
+    """
     x = [14, 13.2, 10, 13,  11, 14,  17, 15,  18, 14.8, 14]
     y = [16, 12,   12, 9.5, 5,  7.5, 5,  9.5, 12, 12,   16]
 
@@ -127,6 +130,9 @@ def star_trajectory():
 
 
 def cv_trajectory():
+    """
+    Create a trajectory outlining the letters CV.
+    """
     x_c = [10, 4,  4, 10, 10, 6, 6, 10, 10]
     y_c = [10, 10, 0, 0,  2,  2, 8, 8,  10]
 
@@ -139,17 +145,19 @@ def cv_trajectory():
     return np.array(x), np.array(y)
 
 
-def main(motion_model, q, r, N):
-    # Artificial trajectory
-    # x, y = spiral_trajectory(N)
-    # x, y = star_trajectory()
-    x, y = cv_trajectory()
-
-
-    plt.figure(figsize=(8, 7))
-    plt.plot(x, y, color="firebrick", label="Original")
-    plt.scatter(x, y, marker="o", facecolors="none", edgecolors="firebrick", s=30)
-    plt.scatter(x[0], y[0], marker="x", color="black", s=150, label="Starting pos")
+def kalman(motion_model, q, r, x, y, axis=None):
+    """
+    For a given motion model, and spectral densities q and r, apply the Kalman
+    filter on a trajectory specified with x and y coordinates.
+    """
+    # Plot the original trajectory first
+    if axis is None:
+        fig, ax = plt.subplots(figsize=(8, 7))
+    else:
+        ax = axis
+    ax.scatter(x, y, marker="o", facecolors="none", edgecolors="firebrick", s=30)
+    ax.scatter(x[0], y[0], marker="x", color="black", s=150, label="Starting pos")
+    ax.plot(x, y, color="firebrick", label="Original")
 
     # Matrices for Kalman filter
     Fi, H, Q, R = define_matrices(motion_model, q, r)
@@ -188,12 +196,30 @@ def main(motion_model, q, r, N):
         observations_y[j] = state[motion_model]
 
     # Plot
-    plt.plot(observations_x, observations_y, color="limegreen", label="Kalman")
-    plt.scatter(observations_x, observations_y, marker="o", facecolors="none", edgecolors="limegreen", s=30)
-
+    ax.plot(observations_x, observations_y, color="limegreen", label="Kalman")
+    ax.scatter(observations_x, observations_y, marker="o", facecolors="none", edgecolors="limegreen", s=30)
     mm = "RW" if motion_model == RW else "NCV" if motion_model == NCV else "NCA"
-    plt.title(f"{mm}, q = {q}, r = {r}")
-    plt.legend()
+    ax.set_title(f"{mm}, q = {q}, r = {r}")
+
+    if axis is None:
+        plt.legend()
+        plt.show()
+
+
+def kalman_all(x, y):
+    """
+    Run the Kalman filter for all 3 motion models and a few pairs of q and r values.
+    """
+    motion_models = [RW, NCV, NCA]
+    spectrals = [(100, 1), (5, 1), (1, 1), (1, 5), (1, 100)]  # (q, r)
+    fig, axes = plt.subplots(len(motion_models), len(spectrals), figsize=(14, 9))
+
+    for row, motion_model in enumerate(motion_models):
+        for col, (q, r) in enumerate(spectrals):
+            kalman(motion_model, q, r, x, y, axis=axes[row, col])
+    
+    plt.tight_layout()
+    # plt.suptitle("Red - original, green - Kalman, black X - starting position")
     plt.show()
 
 
@@ -201,6 +227,13 @@ if __name__ == "__main__":
     motion_model = NCV
     q = 100
     r = 1
-    N = 1
+    N = 40
+    
+    # Choose the artificial trajectory
+    # x, y = spiral_trajectory(N)
+    # x, y = star_trajectory()
+    x, y = cv_trajectory()
 
-    main(motion_model, q, r, N)
+    plt.style.use("ggplot")
+    # kalman(motion_model, q, r, x, y)
+    kalman_all(x, y)
