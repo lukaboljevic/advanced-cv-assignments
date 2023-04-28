@@ -121,13 +121,3 @@ if __name__ == "__main__":
 
     # Run the tracker
     run_tracker(particle_params, dataset_path, sequence_name)
-
-    """
-    Best particle tracker by number of failures:
-        Name: particle-150N-3q-0.01al-0.1dsig-16nbins
-        Failures: 39
-        Overlap: 0.47230058354720456
-        Average speed: 43.55 FPS
-        Average init speed: 1556.46 FPS
-        Robustness: 0.68
-    """
