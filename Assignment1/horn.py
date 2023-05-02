@@ -1,7 +1,7 @@
 import numpy as np
-from scipy.signal import convolve2d
-from utils import gausssmooth, gaussderiv
 from lucas import lucas_kanade
+from scipy.signal import convolve2d
+from utils import gaussderiv, gausssmooth
 
 
 def horn_schunck(img1, img2, max_iters, lmbd, N=None, eps=None, verbose=True):

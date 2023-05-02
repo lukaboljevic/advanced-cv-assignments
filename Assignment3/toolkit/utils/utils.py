@@ -1,6 +1,7 @@
+import importlib.util
 import os
 import sys
-import importlib.util
+
 import yaml
 
 
@@ -68,7 +69,7 @@ def average_time(times, regions):
     
     return time_sum / valid_frames
 
-from utils.tracker import Tracker
+
 def load_tracker(workspace_path, tracker_id):
 
     tracker_config = None
@@ -103,6 +104,8 @@ def load_tracker(workspace_path, tracker_id):
     return tracker_class
 
 from utils.dataset import Dataset
+
+
 def load_dataset(workspace_path):
     return Dataset(workspace_path)
     

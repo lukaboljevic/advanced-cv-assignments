@@ -1,51 +1,9 @@
 import math
 
-import numpy as np
 import cv2
+import numpy as np
 
-
-def create_cosine_window(target_size):
-    """
-    Create a cosine (Hanning) window. Parameter target_size is in the format 
-    (width, height). The output is a cosine window of same size.
-
-    This function is used for correlation tracker only. Correlation tracker is
-    part of Assignment 3.
-    """
-    return cv2.createHanningWindow((target_size[0], target_size[1]), cv2.CV_32F)
-
-
-def create_gauss_peak(target_size, sigma):
-    """
-    Create a Gaussian peak. Parameter target_size is in the format (width, height). 
-    Sigma is the parameter (float) of the Gaussian function. 
-
-    Note that sigma should be small so that the function is in a shape of a peak.
-    Values that make sense are approximately from the interval: ~(0.5, 5)
-    
-    Output is a matrix of dimensions (width, height).
-
-    This function is used for correlation tracker only. Correlation tracker is
-    part of Assignment 3.
-    """
-    w2 = math.floor(target_size[0] / 2)
-    h2 = math.floor(target_size[1] / 2)
-    [X, Y] = np.meshgrid(np.arange(-w2, w2 + 1), np.arange(-h2, h2 + 1))
-    G = np.exp(-X**2 / (2 * sigma**2) - Y**2 / (2 * sigma**2))
-    G = np.roll(G, (-h2, -w2), (0, 1))
-    return G
-
-
-def gausssmooth(img, sigma):
-    """
-    Perform Gauss smoothing on an image.
-
-    Copied from Assignment 1.
-    """
-    x = np.array(list(range(math.floor(-3.0 * sigma + 0.5), math.floor(3.0 * sigma + 0.5) + 1)))
-    G = np.exp(-x**2 / (2 * sigma**2))
-    G = G / np.sum(G)
-    return cv2.sepFilter2D(img, -1, G, G)
+from assignment1.utils import gausssmooth
 
 
 def generate_responses_1():

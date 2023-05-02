@@ -1,8 +1,8 @@
-import os
 import glob
+import os
+
 import cv2
 import numpy as np
-
 from utils.utils import polygon2rectangle, rectangle2polygon
 from utils.io_utils import read_regions
 

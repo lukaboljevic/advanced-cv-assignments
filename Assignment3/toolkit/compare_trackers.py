@@ -1,9 +1,9 @@
 import argparse
-import os
 import json
+import os
 
-from utils.utils import load_tracker, load_dataset
-from utils.export_utils import load_output, print_summary, export_plot
+from utils.utils import load_dataset, load_tracker
+from utils.export_utils import export_plot, load_output, print_summary
 from calculate_measures import tracking_analysis
 
 

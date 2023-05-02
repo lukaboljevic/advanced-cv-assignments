@@ -1,6 +1,6 @@
 import os
+from abc import ABC, abstractmethod
 from timeit import default_timer as timer
-from abc import abstractmethod, ABC
 
 from utils.dataset import Dataset
 from utils.utils import calculate_overlap

@@ -1,8 +1,9 @@
 import math
+
+import matplotlib.pyplot as plt
 import numpy as np
 import sympy as sp
-import matplotlib.pyplot as plt
-from utils import kalman_step, RW, NCV, NCA
+from utils import RW, NCV, NCA, kalman_step
 
 
 def define_matrices(motion_model, q, r):

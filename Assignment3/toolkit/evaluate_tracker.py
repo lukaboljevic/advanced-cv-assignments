@@ -1,8 +1,8 @@
 import argparse
-import os
 import json
+import os
 
-from utils.utils import load_tracker, load_dataset
+from utils.utils import load_dataset, load_tracker
 
 
 def evaluate_tracker(workspace_path, tracker_id, params_path=None):

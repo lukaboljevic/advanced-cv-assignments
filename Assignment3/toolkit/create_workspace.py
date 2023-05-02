@@ -1,6 +1,5 @@
 import argparse
 import os
-
 import urllib.request
 import zipfile
 from shutil import copyfile

@@ -1,8 +1,8 @@
 import argparse
-import os
 import json
+import os
 
-from utils.utils import load_tracker, load_dataset, trajectory_overlaps, count_failures, average_time
+from utils.utils import average_time, count_failures, load_dataset, load_tracker, trajectory_overlaps
 from utils.io_utils import read_regions, read_vector
 from utils.export_utils import export_measures
 

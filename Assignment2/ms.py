@@ -1,7 +1,7 @@
-import numpy as np
 import cv2
-
+import numpy as np
 import utils as ut
+
 
 """
 To get to the mode of the PDF, we iteratively calculate the formula from slides:
@@ -69,7 +69,6 @@ def main(draw=True):
         cv2.waitKey(0)
     
     mean_shift(image, (60, 40), (7, 7), 0.01)
-
 
 
 if __name__ == "__main__":

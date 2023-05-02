@@ -1,10 +1,11 @@
 import numpy as np
 import sympy as sp
-
-
-from utils.tracker import Tracker
-from utils.my_utils import RW, NCV, NCA
 import utils.my_utils as ut
+from utils.my_utils import RW, NCV, NCA
+from utils.tracker import Tracker
+
+from assignment2.utils import epanechnikov_kernel, extract_and_normalize_hist, get_patch
+from assignment4.utils import sample_gauss
 
 
 class ParticleTracker(Tracker):
@@ -141,15 +142,15 @@ class ParticleTracker(Tracker):
         # Target bounding box position, size and image patch
         self.position = (region[0] + region[2] / 2, region[1] + region[3] / 2)  # x, y coordinates of center of the target
         self.bbox_size = (region[2], region[3])  # width, height of the target bounding box 
-        self.target_patch, _ = ut.get_patch(image, self.position, self.bbox_size)  # initial target template i.e. "appearance"
+        self.target_patch, _ = get_patch(image, self.position, self.bbox_size)  # initial target template i.e. "appearance"
 
         # Epanechnikov kernel and target histogram
-        self.kernel = ut.epanechnikov_kernel(self.bbox_size[0], self.bbox_size[1], self.sigma)
-        self.target_histogram = ut.extract_and_normalize_hist(self.target_patch, self.num_bins, self.kernel)
+        self.kernel = epanechnikov_kernel(self.bbox_size[0], self.bbox_size[1], self.sigma)
+        self.target_histogram = extract_and_normalize_hist(self.target_patch, self.num_bins, self.kernel)
 
         # Initialize particles and their weights
         mean = np.zeros(self.Q.shape[0])
-        noise = ut.sample_gauss(mean, self.Q, self.num_particles)
+        noise = sample_gauss(mean, self.Q, self.num_particles)
         self.particle_weights = np.ones(self.num_particles)
         self.normalize_particle_weights()
         self.particles = np.zeros((self.num_particles, self.dim))
@@ -170,7 +171,7 @@ class ParticleTracker(Tracker):
 
         # Move particles (deterministic shift + noise)
         mean = np.zeros(self.Q.shape[0])
-        noise = ut.sample_gauss(mean, self.Q, self.num_particles)
+        noise = sample_gauss(mean, self.Q, self.num_particles)
         self.particles = np.transpose(np.matmul(self.Fi, self.particles.transpose())) + noise
 
         # Clip x and y coordinates to be within the image. Otherwise, if the particle goes
@@ -182,8 +183,8 @@ class ParticleTracker(Tracker):
 
         # Recalculate particle weights
         for i, particle in enumerate(self.particles):
-            patch, _ = ut.get_patch(image, (particle[0], particle[self.motion_model]), self.bbox_size)
-            patch_hist = ut.extract_and_normalize_hist(patch, self.num_bins, self.kernel)
+            patch, _ = get_patch(image, (particle[0], particle[self.motion_model]), self.bbox_size)
+            patch_hist = extract_and_normalize_hist(patch, self.num_bins, self.kernel)
             hellinger = self.hellinger_distance(patch_hist)
             probability = self.dist_to_prob(hellinger)
 
@@ -199,8 +200,8 @@ class ParticleTracker(Tracker):
         self.position = (new_x, new_y)
 
         # Update target histogram
-        self.target_patch, _ = ut.get_patch(image, self.position, self.bbox_size)
-        new_histogram = ut.extract_and_normalize_hist(self.target_patch, self.num_bins, self.kernel)
+        self.target_patch, _ = get_patch(image, self.position, self.bbox_size)
+        new_histogram = extract_and_normalize_hist(self.target_patch, self.num_bins, self.kernel)
         self.target_histogram = (1 - self.alpha) * self.target_histogram + self.alpha * new_histogram
 
         # Return the position of the top left corner + width and height of target bounding box

@@ -1,5 +1,4 @@
 import cv2
-
 from utils.tracker import Tracker
 
 

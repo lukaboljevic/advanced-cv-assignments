@@ -1,9 +1,12 @@
-import os
 import glob
+import os
+from math import ceil
 
-import numpy as np
 import cv2
+import numpy as np
 from screeninfo import get_monitors
+
+from assignment4.utils import RW, NCV, NCA
 
 
 class VOTSequence():
@@ -110,6 +113,13 @@ class VOTSequence():
         br_ = (text_pos[0] - 5 + text_sz[0][0] + 10, text_pos[1] - 5 - text_sz[0][1])
         cv2.rectangle(img, tl_, br_, (0, 0, 0), cv2.FILLED)
         cv2.putText(img, text, text_pos, font, 1, (255, 255, 255), 1, cv2.LINE_AA, False)
+
+    def draw_particles(self, img, particles, weights, motion_model=NCV):
+        """ Draw particles for particle tracker. """
+        for particle, weight in zip(particles, weights):
+            center_x = round(particle[0])
+            center_y = round(particle[motion_model])
+            cv2.circle(img, (center_x, center_y), ceil(150*weight), (30, 200, 50), cv2.FILLED)
 
     def show_image(self, img, delay):
         cv2.imshow(self.window_name, img)

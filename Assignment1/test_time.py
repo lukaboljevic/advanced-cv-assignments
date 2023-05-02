@@ -1,9 +1,9 @@
-import numpy as np
-import cv2 as cv
 from time import perf_counter
 
-from lucas import lucas_kanade
+import cv2 as cv
+import numpy as np
 from horn import horn_schunck
+from lucas import lucas_kanade
 from utils import rotate_image
 
 

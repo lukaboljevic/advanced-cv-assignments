@@ -1,12 +1,11 @@
-import os
 import json
 import math
+import os
 
 import matplotlib.pyplot as plt
-
 from utils.dataset import Dataset
-from utils.tracker import Tracker
 from utils.plot_styles import load_plot_styles
+from utils.tracker import Tracker
 
 
 def print_summary(output_dict):

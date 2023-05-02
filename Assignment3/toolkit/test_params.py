@@ -1,9 +1,9 @@
-import random
 import json
 import os
+import random
 
-from evaluate_tracker import evaluate_tracker
 from calculate_measures import tracking_analysis
+from evaluate_tracker import evaluate_tracker
 from utils.my_utils import RW, NCV, NCA
 
 

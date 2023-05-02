@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.signal import convolve2d
-from utils import gausssmooth, gaussderiv
+from utils import gaussderiv, gausssmooth
 
 
 def lucas_kanade(img1, img2, N=3, verbose=True):

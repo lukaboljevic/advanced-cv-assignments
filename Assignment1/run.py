@@ -1,9 +1,8 @@
-import numpy as np
-import matplotlib.pyplot as plt
 import cv2 as cv
-
-from lucas import lucas_kanade
+import matplotlib.pyplot as plt
+import numpy as np
 from horn import horn_schunck
+from lucas import lucas_kanade
 from utils import rotate_image, show_flow
 
 

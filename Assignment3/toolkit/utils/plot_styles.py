@@ -1,4 +1,3 @@
-
 def load_plot_styles():
     styles = [{'color': 'r', 'marker': 'o'}, \
         {'color': 'g', 'marker': '*'}, \

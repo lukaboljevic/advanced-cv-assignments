@@ -1,9 +1,11 @@
-import numpy as np
-from numpy.fft import fft2, ifft2
 import cv2
-
+import numpy as np
 import utils.my_utils as ut
+from numpy.fft import fft2, ifft2
 from utils.tracker import Tracker
+
+from assignment2.utils import get_patch
+
 
 """
 All extracted patches should be grayscaled, and first multiplied with a cosine (Hanning) window
@@ -114,7 +116,7 @@ class CorrelationTracker(Tracker):
         # self.search_size = (enlarged_size, enlarged_size)
 
         # Initial target template i.e. patch
-        self.target_patch, _ = ut.get_patch(image, self.position, self.search_size)
+        self.target_patch, _ = get_patch(image, self.position, self.search_size)
 
 
         # Cosine (Hanning window) and ideal Gaussian response
@@ -135,7 +137,7 @@ class CorrelationTracker(Tracker):
 
 
         # Extract patch from previous target position
-        patch, _ = ut.get_patch(image, self.position, self.search_size)
+        patch, _ = get_patch(image, self.position, self.search_size)
         patch = np.multiply(patch, self.cosine_window)
         patch_fft = fft2(patch)
 
@@ -152,7 +154,7 @@ class CorrelationTracker(Tracker):
 
         # Update target position and template
         self.position = (self.position[0] + shift_x, self.position[1] + shift_y)
-        self.target_patch, _ = ut.get_patch(image, self.position, self.search_size)
+        self.target_patch, _ = get_patch(image, self.position, self.search_size)
         self.target_patch = np.multiply(self.target_patch, self.cosine_window)
 
         # Update the filter

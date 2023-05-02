@@ -3,11 +3,13 @@
 # here because it's useful and easier to test outside of Assignment 3 toolkit.
 # ------------------------------------------------------------------------------------
 
-import numpy as np
-from numpy.fft import fft2, ifft2
 import cv2
-
+import numpy as np
 import utils as ut
+from numpy.fft import fft2, ifft2
+
+from assignment3.toolkit.utils.my_utils import create_cosine_window, create_gauss_peak
+
 
 """
 All extracted patches should be grayscaled, and first multiplied with a cosine (Hanning) window
@@ -116,8 +118,8 @@ class CorrelationTracker(ut.Tracker):
 
 
         # Cosine (Hanning window) and ideal Gaussian response
-        self.cosine_window = ut.create_cosine_window(self.search_size)
-        self.G = ut.create_gauss_peak(self.search_size, self.sigma)
+        self.cosine_window = create_cosine_window(self.search_size)
+        self.G = create_gauss_peak(self.search_size, self.sigma)
         self.G_fft = fft2(self.G)
 
         # Multiply template with cosine window to reduce the impact of boundary effects when doing FFT
