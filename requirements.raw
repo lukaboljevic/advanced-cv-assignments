@@ -1,0 +1,9 @@
+scipy
+numpy
+opencv-python
+matplotlib
+screeninfo
+PyYAML
+sympy
+got10k
+# torch, torchvision, torchaudio; follow https://pytorch.org/get-started/locally/

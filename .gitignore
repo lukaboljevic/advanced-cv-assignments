@@ -3,3 +3,6 @@ __pycache__/
 vot2014/
 **/workspace-vot2014/sequences/
 **/workspace-vot2014/results/
+
+# Long term tracking dataset
+ltt-dataset/

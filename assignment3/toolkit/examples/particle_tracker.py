@@ -1,6 +1,5 @@
 import numpy as np
 import sympy as sp
-import utils.my_utils as ut
 from utils.my_utils import RW, NCV, NCA
 from utils.tracker import Tracker
 
@@ -175,7 +174,7 @@ class ParticleTracker(Tracker):
         self.particles = np.transpose(np.matmul(self.Fi, self.particles.transpose())) + noise
 
         # Clip x and y coordinates to be within the image. Otherwise, if the particle goes
-        # out of bounds, ut.get_patch returns a patch of other size, and then extract_histogram
+        # out of bounds, get_patch returns a patch of other size, and then extract_histogram
         # fails.
         self.particles[:, 0] = np.clip(self.particles[:, 0], 0, image.shape[1] - 1)  # image.shape[1] is width
         self.particles[:, self.motion_model] = \
