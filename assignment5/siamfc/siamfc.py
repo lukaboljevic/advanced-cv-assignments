@@ -40,7 +40,7 @@ class Net(nn.Module):
 
 class TrackerSiamFC(Tracker):
 
-    def __init__(self, net_path=None, **kwargs):
+    def __init__(self, net_path=None, long_term=False, long_term_params=None, **kwargs):
         super(TrackerSiamFC, self).__init__('SiamFC', True)
         self.cfg = self.parse_args(**kwargs)
 
@@ -60,6 +60,11 @@ class TrackerSiamFC(Tracker):
                 net_path, map_location=lambda storage, loc: storage))
         self.net = self.net.to(self.device)
 
+        # Luka: whether to perform long term tracking instead of short term
+        self.long_term = long_term
+        self.long_term_params = long_term_params
+        self.redetecting = False
+
         # setup criterion
         self.criterion = BalancedLoss()
 
@@ -75,6 +80,7 @@ class TrackerSiamFC(Tracker):
             self.cfg.ultimate_lr / self.cfg.initial_lr,
             1.0 / self.cfg.epoch_num)
         self.lr_scheduler = ExponentialLR(self.optimizer, gamma)
+
 
     def parse_args(self, **kwargs):
         # default parameters
@@ -108,7 +114,8 @@ class TrackerSiamFC(Tracker):
             if key in cfg:
                 cfg.update({key: val})
         return namedtuple('Config', cfg.keys())(**cfg)
-    
+
+
     @torch.no_grad()
     def init(self, img, box):
         # set to evaluation mode
@@ -150,17 +157,52 @@ class TrackerSiamFC(Tracker):
         z = torch.from_numpy(z).to(
             self.device).permute(2, 0, 1).unsqueeze(0).float()
         self.kernel = self.net.backbone(z)
-    
+
+
     @torch.no_grad()
     def update(self, img):
+        img_height, img_width = img.shape[:2]
+        redetection_bboxes = None
+        redetection_centers = None
+
         # set to evaluation mode
         self.net.eval()
 
-        # search images
-        x = [ops.crop_and_resize(
-            img, self.center, self.x_sz * f,
-            out_size=self.cfg.instance_sz,
-            border_value=self.avg_color) for f in self.scale_factors]
+        if self.long_term and self.redetecting:
+            # Luka: we want to redetect the target at fixed scale, but at multiple positions.
+            # Generate num_locations locations (center coordinates as y, x in a numpy array, same as self.center)
+            increased_size = self.x_sz * self.long_term_params["scale_up"]
+            lower_x = lower_y = 0 + increased_size // 2
+            upper_x = img_width - increased_size // 2
+            upper_y = img_height - increased_size // 2
+            redetection_centers = [
+                np.array([
+                    np.random.uniform(lower_y, upper_y), np.random.uniform(lower_x, upper_x)
+                ]) for _ in range(self.long_term_params["num_locations"])
+            ]
+
+            # 1-indexed and left corner based bounding boxes
+            redetection_bboxes = [np.array([
+                center[1] + 1 - (increased_size - 1) / 2,
+                center[0] + 1 - (increased_size - 1) / 2,
+                increased_size,
+                increased_size
+                ]) for center in redetection_centers
+            ]
+
+            # Multiple images at fixed scale
+            x = [
+                ops.crop_and_resize(img, center, increased_size, out_size=self.cfg.instance_sz, border_value=self.avg_color)
+                for center in redetection_centers
+            ]
+        
+        else:
+            # Search images; Luka: target is searched at multiple scales around same starting positions
+            x = [ops.crop_and_resize(
+                img, self.center, self.x_sz * f,
+                out_size=self.cfg.instance_sz,
+                border_value=self.avg_color) for f in self.scale_factors]
+            
         x = np.stack(x, axis=0)
         x = torch.from_numpy(x).to(
             self.device).permute(0, 3, 1, 2).float()
@@ -170,13 +212,14 @@ class TrackerSiamFC(Tracker):
         responses = self.net.head(self.kernel, x)
         responses = responses.squeeze(1).cpu().numpy()
 
-        # upsample responses and penalize scale changes
+        # upsample responses and penalize scale changes, [Luka] if we're not in redetection stage
         responses = np.stack([cv2.resize(
             u, (self.upscale_sz, self.upscale_sz),
             interpolation=cv2.INTER_CUBIC)
             for u in responses])
-        responses[:self.cfg.scale_num // 2] *= self.cfg.scale_penalty
-        responses[self.cfg.scale_num // 2 + 1:] *= self.cfg.scale_penalty
+        if not (self.long_term and self.redetecting):
+            responses[:self.cfg.scale_num // 2] *= self.cfg.scale_penalty
+            responses[self.cfg.scale_num // 2 + 1:] *= self.cfg.scale_penalty
 
         # peak scale
         scale_id = np.argmax(np.amax(responses, axis=(1, 2)))
@@ -184,35 +227,55 @@ class TrackerSiamFC(Tracker):
         # peak location
         response = responses[scale_id]
         max_resp = max(0, response.max())
-        response -= response.min()
-        response /= response.sum() + 1e-16
-        response = (1 - self.cfg.window_influence) * response + \
-            self.cfg.window_influence * self.hann_window
-        loc = np.unravel_index(response.argmax(), response.shape)
+        if self.long_term and not self.redetecting:
+            if max_resp < self.long_term_params["failure_threshold"]:
+                self.redetecting = True
+                # Luka: If the target is lost in current frame, we immediately want to start redetecting, 
+                # mostly for the sake of not updating the tracker
+                return self.update(img)
+        
+        if self.long_term and self.redetecting:
+            # Luka: set center to one of the generated centers, and DON'T UPDATE!
+            self.center = redetection_centers[scale_id]
+        else:
+            # peak location
+            response -= response.min()
+            response /= response.sum() + 1e-16
+            response = (1 - self.cfg.window_influence) * response + \
+                self.cfg.window_influence * self.hann_window
+            loc = np.unravel_index(response.argmax(), response.shape)
 
-        # locate target center
-        disp_in_response = np.array(loc) - (self.upscale_sz - 1) / 2
-        disp_in_instance = disp_in_response * \
-            self.cfg.total_stride / self.cfg.response_up
-        disp_in_image = disp_in_instance * self.x_sz * \
-            self.scale_factors[scale_id] / self.cfg.instance_sz
-        self.center += disp_in_image
+            # locate target center
+            disp_in_response = np.array(loc) - (self.upscale_sz - 1) / 2
+            disp_in_instance = disp_in_response * \
+                self.cfg.total_stride / self.cfg.response_up
+            disp_in_image = disp_in_instance * self.x_sz * \
+                self.scale_factors[scale_id] / self.cfg.instance_sz
+            self.center += disp_in_image
 
-        # update target size
-        scale =  (1 - self.cfg.scale_lr) * 1.0 + \
-            self.cfg.scale_lr * self.scale_factors[scale_id]
-        self.target_sz *= scale
-        self.z_sz *= scale
-        self.x_sz *= scale
+            # update target size
+            scale =  (1 - self.cfg.scale_lr) * 1.0 + \
+                self.cfg.scale_lr * self.scale_factors[scale_id]
+            self.target_sz *= scale
+            self.z_sz *= scale
+            self.x_sz *= scale
 
-        # return 1-indexed and left-top based bounding box
+        # 1-indexed and left-top based predicted bounding box (most probable target location)
         box = np.array([
             self.center[1] + 1 - (self.target_sz[1] - 1) / 2,
             self.center[0] + 1 - (self.target_sz[0] - 1) / 2,
             self.target_sz[1], self.target_sz[0]])
+        
+        if self.long_term:
+            # The "issue" with this is that on the exact frame when we redetect the target, i.e. when redetection 
+            # stage stops, we will not report the exact position, but a slightly offset one, coming from one of the 
+            # generated "redetection centers". In the next frame, the SiamFC tracker is capable of adjusting this 
+            # offset position to the right one.
+            self.redetecting = (max_resp < self.long_term_params["failure_threshold"])
+        
+        return box, max_resp, redetection_bboxes
 
-        return box, max_resp
-    
+
     def train_step(self, batch, backward=True):
         # set network mode
         self.net.train(backward)
@@ -236,6 +299,7 @@ class TrackerSiamFC(Tracker):
                 self.optimizer.step()
         
         return loss.item()
+
 
     @torch.enable_grad()
     def train_over(self, seqs, val_seqs=None,
@@ -283,7 +347,8 @@ class TrackerSiamFC(Tracker):
             net_path = os.path.join(
                 save_dir, 'siamfc_alexnet_e%d.pth' % (epoch + 1))
             torch.save(self.net.state_dict(), net_path)
-    
+
+
     def _create_labels(self, size):
         # skip if same sized labels already created
         if hasattr(self, 'labels') and self.labels.size() == size:

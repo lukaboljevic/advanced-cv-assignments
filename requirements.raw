@@ -6,4 +6,7 @@ screeninfo
 PyYAML
 sympy
 got10k
-# torch, torchvision, torchaudio; follow https://pytorch.org/get-started/locally/
+# torch
+# torchvision
+# torchaudio
+# for torch, torchvision, torchaudio; follow https://pytorch.org/get-started/locally/
