@@ -9,6 +9,7 @@ import time
 import cv2
 import sys
 import os
+from math import ceil
 from collections import namedtuple
 from torch.optim.lr_scheduler import ExponentialLR
 from torch.utils.data import DataLoader
@@ -64,6 +65,7 @@ class TrackerSiamFC(Tracker):
         self.long_term = long_term
         self.long_term_params = long_term_params
         self.redetecting = False
+        self.frames_in_redetection = 0
 
         # setup criterion
         self.criterion = BalancedLoss()
@@ -169,17 +171,32 @@ class TrackerSiamFC(Tracker):
         self.net.eval()
 
         if self.long_term and self.redetecting:
+            self.frames_in_redetection += 1
+            if self.frames_in_redetection >= 35:
+                # ad hoc solution, doesn't affect performance THAT much across the entire
+                # dataset but helps in some individual sequences and increases recall by ~1.5-2%
+                self.center = np.array([img_height // 2, img_width // 2])
+
             # Luka: we want to redetect the target at fixed scale, but at multiple positions.
-            # Generate num_locations locations (center coordinates as y, x in a numpy array, same as self.center)
+            # Generate a number of locations i.e. center coordinates as y, x in a numpy array - same as self.center
             increased_size = self.x_sz * self.long_term_params["scale_up"]
-            lower_x = lower_y = 0 + increased_size // 2
-            upper_x = img_width - increased_size // 2
-            upper_y = img_height - increased_size // 2
-            redetection_centers = [
-                np.array([
-                    np.random.uniform(lower_y, upper_y), np.random.uniform(lower_x, upper_x)
-                ]) for _ in range(self.long_term_params["num_locations"])
-            ]
+
+            if self.long_term_params["sampling"] == "uniform":
+                lower_x = lower_y = 0 + increased_size // 2
+                upper_x = img_width - increased_size // 2
+                upper_y = img_height - increased_size // 2
+                redetection_centers = [
+                    np.array([
+                        np.random.uniform(lower_y, upper_y), np.random.uniform(lower_x, upper_x)
+                    ]) for _ in range(self.long_term_params["num_locations"])
+                ]
+            elif self.long_term_params["sampling"] == "gaussian":
+                # "Hacky" way to compute deviation based on size of target and number of frames since redetection started
+                deviation = min(int((increased_size * 0.7)) + int(ceil(1.1**self.frames_in_redetection)), 200)  # cap to 200
+                num_locations = min(self.long_term_params["num_locations"] + self.frames_in_redetection // 3, 25)  # cap to 25 locations
+                redetection_centers = np.random.normal(self.center, deviation, (num_locations, 2))
+            else:
+                raise ValueError("Unsupported sampling technique")
 
             # 1-indexed and left corner based bounding boxes
             redetection_bboxes = [np.array([
@@ -235,8 +252,10 @@ class TrackerSiamFC(Tracker):
                 return self.update(img)
         
         if self.long_term and self.redetecting:
-            # Luka: set center to one of the generated centers, and DON'T UPDATE!
-            self.center = redetection_centers[scale_id]
+            # Luka: set center to one of the generated centers, and DON'T UPDATE TARGET SIZE!
+            if self.long_term_params["sampling"] == "uniform":
+                self.center = redetection_centers[scale_id]
+            # if gaussian, we update the center ONLY when we have redetected the target
         else:
             # peak location
             response -= response.min()
@@ -272,7 +291,11 @@ class TrackerSiamFC(Tracker):
             # generated "redetection centers". In the next frame, the SiamFC tracker is capable of adjusting this 
             # offset position to the right one.
             self.redetecting = (max_resp < self.long_term_params["failure_threshold"])
-        
+            if not self.redetecting:
+                self.frames_in_redetection = 0
+                if redetection_centers is not None and self.long_term_params["sampling"] == "gaussian":
+                    self.center = redetection_centers[scale_id]
+
         return box, max_resp, redetection_bboxes
 
 

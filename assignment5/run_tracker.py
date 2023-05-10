@@ -18,7 +18,8 @@ def evaluate_tracker(dataset_path, network_path, results_dir, visualize, long_te
         long_term_params = {
             "num_locations": 10,
             "scale_up": 1.0,
-            "failure_threshold": 4.5 # if maximum of correlation response falls below the threshold, redetection starts
+            "failure_threshold": 4, # if maximum of correlation response falls below the threshold, redetection starts
+            "sampling": "uniform"  # or "gaussian"
         }
 
     tracker = TrackerSiamFC(net_path=network_path, long_term=long_term, long_term_params=long_term_params)
@@ -80,7 +81,7 @@ def evaluate_tracker(dataset_path, network_path, results_dir, visualize, long_te
         f.write(f"{long_term_params['num_locations']} locations\n")
         f.write(f"search size {long_term_params['scale_up']:.1f} * x_sz\n")
         f.write(f"{long_term_params['failure_threshold']} failure threshold\n")
-        f.write("uniform sampling over entire image")
+        f.write(f"{long_term_params['sampling']} sampling")
 
 
 parser = argparse.ArgumentParser(description='SiamFC Runner Script')
