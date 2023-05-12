@@ -1,0 +1,4 @@
+10 locations
+search size 1.0 * x_sz
+4.5 failure threshold
+gaussian sampling

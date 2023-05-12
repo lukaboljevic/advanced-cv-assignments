@@ -1,0 +1,4 @@
+30 locations
+search size 1.0 * x_sz
+4 failure threshold
+uniform sampling
